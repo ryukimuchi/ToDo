@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="ja" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>家計簿 2026</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="家計簿 2026">
+  <meta name="theme-color" content="#0f0f13" id="themeColorMeta">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0f0f13; --surface:rgba(255,255,255,.04); --surface-solid:#1a1a24;
+      --border:rgba(255,255,255,.08); --border-focus:rgba(139,92,246,.7);
+      --text:#e2e2e8; --text-muted:#6b6b7e; --accent:#8b5cf6;
+      --c-income:#4472C4; --c-fixed:#70AD47; --c-varfam:#ED7D31;
+      --c-varhus:#4AAFDB; --c-varwif:#E85D7A; --c-repay:#9E9E9E;
+      --danger:#ef4444; --green:#34d399; --yellow:#fbbf24;
+      --radius:14px; --radius-sm:8px;
+      --safe-top:env(safe-area-inset-top,0px);
+      --safe-bottom:env(safe-area-inset-bottom,0px);
+      --safe-left:env(safe-area-inset-left,0px);
+      --safe-right:env(safe-area-inset-right,0px);
+      --nav-h:60px; --input-bg:rgba(255,255,255,.06);
+      --modal-bg:rgba(0,0,0,.6);
+    }
+    [data-theme="light"] {
+      --bg:#f0f2f8; --surface:rgba(255,255,255,.85); --surface-solid:#fff;
+      --border:rgba(0,0,0,.1); --border-focus:rgba(124,58,237,.6);
+      --text:#1a1a2e; --text-muted:#7070a0; --accent:#7c3aed;
+      --input-bg:rgba(0,0,0,.04); --modal-bg:rgba(0,0,0,.3);
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html{height:-webkit-fill-available}
+    body{
+      font-family:'Inter',-apple-system,sans-serif;
+      background:var(--bg);color:var(--text);
+      min-height:100vh;min-height:-webkit-fill-available;
+      -webkit-font-smoothing:antialiased;
+      padding-bottom:calc(var(--nav-h) + var(--safe-bottom));
+      transition:background .3s,color .3s;
+    }
+    body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0}
+    [data-theme="dark"] body::before{
+      background:
+        radial-gradient(ellipse 60% 40% at 10% 5%,rgba(68,114,196,.12) 0%,transparent 60%),
+        radial-gradient(ellipse 50% 40% at 90% 90%,rgba(139,92,246,.1) 0%,transparent 60%);
+    }
+    [data-theme="light"] body::before{
+      background:
+        radial-gradient(ellipse 60% 40% at 10% 5%,rgba(68,114,196,.06) 0%,transparent 60%),
+        radial-gradient(ellipse 50% 40% at 90% 90%,rgba(139,92,246,.05) 0%,transparent 60%);
+    }
+
+    /* ===== Loading Screen ===== */
+    .loading-screen{
+      position:fixed;inset:0;z-index:300;
+      background:var(--bg);display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:16px;
+    }
+    .loading-screen.hidden{display:none}
+    .spinner{
+      width:40px;height:40px;border:3px solid var(--border);
+      border-top-color:var(--accent);border-radius:50%;
+      animation:spin .8s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loading-text{font-size:14px;color:var(--text-muted)}
+
+    /* ===== PIN Screen ===== */
+    .pin-screen{
+      position:fixed;inset:0;z-index:200;
+      background:var(--bg);display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      padding:32px 24px;
+    }
+    .pin-screen.hidden{display:none}
+    .pin-icon{font-size:48px;margin-bottom:12px}
+    .pin-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px}
+    .pin-sub{font-size:14px;color:var(--text-muted);margin-bottom:32px;text-align:center}
+    .pin-dots{display:flex;gap:14px;margin-bottom:32px}
+    .pin-dot{
+      width:18px;height:18px;border-radius:50%;
+      border:2px solid var(--border);background:transparent;
+      transition:all .2s;
+    }
+    .pin-dot.filled{background:var(--accent);border-color:var(--accent)}
+    .pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:280px;width:100%}
+    .pin-key{
+      aspect-ratio:1;background:var(--surface);border:1px solid var(--border);
+      border-radius:50%;font-size:22px;font-weight:500;color:var(--text);
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      transition:all .15s;user-select:none;
+    }
+    .pin-key:active{background:rgba(139,92,246,.3);border-color:var(--accent);transform:scale(.93)}
+    .pin-key.del{font-size:18px}
+    .pin-key.empty{visibility:hidden}
+    .pin-error{font-size:13px;color:var(--danger);margin-top:12px;min-height:18px}
+    .pin-reset{
+      margin-top:20px;background:none;border:none;cursor:pointer;
+      color:var(--text-muted);font-size:12px;font-family:inherit;
+      text-decoration:underline;
+    }
+
+    /* ===== Top Header ===== */
+    .top-header{
+      position:sticky;top:0;z-index:50;
+      padding:calc(var(--safe-top) + 12px) calc(var(--safe-right) + 16px) 12px calc(var(--safe-left) + 16px);
+      display:flex;align-items:center;gap:10px;
+      background:var(--bg);border-bottom:1px solid var(--border);
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      transition:background .3s;
+    }
+    .top-header h1{
+      flex:1;font-size:20px;font-weight:700;
+      background:linear-gradient(135deg,var(--text) 0%,var(--text-muted) 100%);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    }
+    .hdr-btn{
+      background:var(--surface);border:1px solid var(--border);border-radius:9px;
+      width:36px;height:36px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+      font-size:15px;color:var(--text-muted);transition:all .2s;flex-shrink:0;
+    }
+    .hdr-btn:active{opacity:.7}
+    .sync-indicator{
+      width:8px;height:8px;border-radius:50%;flex-shrink:0;
+      background:var(--green);transition:background .3s;
+    }
+    .sync-indicator.syncing{background:var(--yellow);animation:pulse .8s infinite}
+    .sync-indicator.offline{background:var(--danger)}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+    /* ===== Bottom Nav ===== */
+    .bottom-nav{
+      position:fixed;bottom:0;left:0;right:0;z-index:50;
+      height:calc(var(--nav-h) + var(--safe-bottom));
+      padding-bottom:var(--safe-bottom);
+      background:var(--surface-solid);border-top:1px solid var(--border);
+      display:flex;align-items:center;
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    }
+    .nav-btn{
+      flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:3px;height:100%;background:none;border:none;cursor:pointer;
+      font-size:10px;font-family:inherit;color:var(--text-muted);transition:color .2s;padding-bottom:2px;
+    }
+    .nav-btn svg{width:22px;height:22px;transition:stroke .2s}
+    .nav-btn.active{color:var(--accent)}
+    .nav-btn.active svg{stroke:var(--accent)}
+
+    /* ===== Tab Content ===== */
+    .tab{display:none;padding:16px calc(var(--safe-right)+16px) 16px calc(var(--safe-left)+16px)}
+    .tab.active{display:block}
+
+    /* ===== Cards ===== */
+    .card{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--radius);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      transition:background .3s,border-color .3s;
+    }
+    .card-title{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+    section.blk{margin-bottom:14px}
+
+    /* ===== KPI Cards ===== */
+    .kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+    .kpi-card{
+      background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+      padding:14px;display:flex;flex-direction:column;gap:4px;transition:background .3s;
+    }
+    .kpi-label{font-size:11px;color:var(--text-muted);font-weight:500}
+    .kpi-val{font-size:20px;font-weight:700;letter-spacing:-.5px;color:var(--text)}
+    .kpi-diff{font-size:11px;font-weight:500}
+    .kpi-diff.pos{color:var(--green)}
+    .kpi-diff.neg{color:var(--danger)}
+    .kpi-diff.neu{color:var(--text-muted)}
+    .kpi-card.income .kpi-val{color:var(--c-income)}
+    .kpi-card.expense .kpi-val{color:var(--c-varwif)}
+
+    /* ===== Month Nav ===== */
+    .month-nav{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:10px 16px;background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--radius);margin-bottom:14px;
+    }
+    .month-nav button{
+      background:none;border:none;cursor:pointer;
+      color:var(--text-muted);font-size:18px;padding:4px 10px;border-radius:6px;transition:all .15s;
+    }
+    .month-nav button:active{background:rgba(139,92,246,.15);color:var(--accent)}
+    .month-nav .month-label{font-size:16px;font-weight:700;color:var(--text)}
+
+    /* ===== Budget Bars ===== */
+    .budget-section{padding:16px;margin-bottom:14px}
+    .budget-row{margin-bottom:12px}
+    .budget-row:last-child{margin-bottom:0}
+    .budget-row-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+    .budget-sec-name{font-size:13px;font-weight:600}
+    .budget-amounts{font-size:11px;color:var(--text-muted)}
+    .budget-track{height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+    .budget-fill{height:100%;border-radius:4px;transition:width .5s ease}
+    .budget-pct{font-size:10px;color:var(--text-muted);margin-top:3px;text-align:right}
+
+    /* ===== Donut Chart ===== */
+    .chart-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px;align-items:center}
+    .donut-wrap{position:relative;display:flex;align-items:center;justify-content:center}
+    .donut-center{position:absolute;text-align:center;pointer-events:none}
+    .donut-center-val{font-size:14px;font-weight:700;color:var(--text)}
+    .donut-center-label{font-size:9px;color:var(--text-muted)}
+    .chart-legend{display:flex;flex-direction:column;gap:7px}
+    .legend-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text)}
+    .legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+    .legend-pct{color:var(--text-muted);font-size:11px;margin-left:auto}
+
+    /* ===== Annual Table ===== */
+    .annual-toggle{
+      width:100%;background:none;border:none;cursor:pointer;
+      padding:12px 16px;display:flex;justify-content:space-between;align-items:center;
+      color:var(--text);font-size:13px;font-weight:600;font-family:inherit;
+    }
+    .annual-toggle .chev{font-size:10px;color:var(--text-muted);transition:transform .2s;display:inline-block}
+    .annual-toggle .chev.open{transform:rotate(180deg)}
+    .annual-body{display:none;overflow-x:auto;padding:0 16px 16px}
+    .annual-body.open{display:block}
+    .annual-table{width:100%;border-collapse:collapse;font-size:12px;min-width:300px}
+    .annual-table th{padding:7px 10px;background:rgba(139,92,246,.15);color:var(--accent);font-weight:600;text-align:right;white-space:nowrap}
+    .annual-table th:first-child{text-align:left}
+    .annual-table td{padding:7px 10px;border-bottom:1px solid var(--border);text-align:right;color:var(--text);white-space:nowrap}
+    .annual-table td:first-child{text-align:left;color:var(--text-muted);font-weight:500}
+    .annual-table tr:last-child td{border-bottom:none;font-weight:700}
+    .td-pos{color:var(--green) !important}
+    .td-neg{color:var(--danger) !important}
+
+    /* ===== Input Tab ===== */
+    .amount-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:14px;text-align:center}
+    .amount-label{font-size:12px;color:var(--text-muted)}
+    .amount-input{
+      width:100%;background:none;border:none;outline:none;
+      font-size:36px;font-weight:700;text-align:center;
+      color:var(--text);font-family:inherit;-webkit-appearance:none;caret-color:var(--accent);
+    }
+    .amount-input::placeholder{color:var(--text-muted)}
+    .section-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:none}
+    .section-tabs::-webkit-scrollbar{display:none}
+    .sec-tab{
+      padding:8px 14px;border-radius:20px;border:1px solid var(--border);
+      background:transparent;font-size:13px;font-weight:500;font-family:inherit;
+      cursor:pointer;color:var(--text-muted);white-space:nowrap;transition:all .15s;flex-shrink:0;
+    }
+    .sec-tab.active{color:#fff;border-color:transparent}
+    .form-fields{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px}
+    .form-field{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border);gap:12px}
+    .form-field:last-child{border-bottom:none}
+    .field-label{font-size:13px;font-weight:500;color:var(--text-muted);min-width:60px;flex-shrink:0}
+    .field-input{flex:1;background:none;border:none;outline:none;font-size:15px;color:var(--text);font-family:inherit;text-align:right;-webkit-appearance:none}
+    .field-input::placeholder{color:var(--text-muted)}
+    select.field-input{
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b6b7e' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:left 0 center;padding-left:16px;cursor:pointer;
+    }
+    select.field-input option{background:var(--surface-solid);color:var(--text)}
+    .submit-btn{
+      width:100%;padding:16px;background:linear-gradient(135deg,var(--accent),#7c3aed);
+      color:#fff;border:none;border-radius:var(--radius);
+      font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;
+      min-height:52px;transition:opacity .2s,transform .15s;
+    }
+    .submit-btn:active{opacity:.85;transform:scale(.98)}
+
+    /* ===== List Tab ===== */
+    .list-filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:none}
+    .list-filters::-webkit-scrollbar{display:none}
+    .filter-chip{
+      padding:7px 14px;border-radius:20px;border:1px solid var(--border);
+      background:transparent;font-size:12px;font-weight:500;font-family:inherit;
+      cursor:pointer;color:var(--text-muted);white-space:nowrap;transition:all .15s;flex-shrink:0;
+    }
+    .filter-chip.active{background:rgba(139,92,246,.2);border-color:rgba(139,92,246,.5);color:#c4b5fd}
+    .search-wrap{position:relative;margin-bottom:10px}
+    .search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none}
+    .search-input{
+      width:100%;background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--radius-sm);color:var(--text);font-family:inherit;
+      font-size:15px;padding:11px 14px 11px 36px;outline:none;transition:border-color .2s;-webkit-appearance:none;
+    }
+    .search-input:focus{border-color:var(--border-focus)}
+    .search-input::placeholder{color:var(--text-muted)}
+    .txn-group{margin-bottom:12px}
+    .txn-date-header{font-size:12px;font-weight:600;color:var(--text-muted);padding:4px 0 8px;letter-spacing:.3px}
+    .txn-list-card{overflow:hidden}
+    .txn-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);position:relative}
+    .txn-item:last-child{border-bottom:none}
+    .txn-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+    .txn-body{flex:1;min-width:0;cursor:pointer}
+    .txn-cat{font-size:14px;font-weight:500;color:var(--text)}
+    .txn-meta{font-size:11px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .txn-amount{font-size:15px;font-weight:700;flex-shrink:0}
+    .txn-income{color:var(--c-income)}
+    .txn-expense{color:var(--text)}
+    .txn-del{background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px 6px;opacity:.5;transition:opacity .15s;font-size:14px}
+    .txn-del:active{opacity:1;color:var(--danger)}
+    .empty-list{text-align:center;padding:48px 0;color:var(--text-muted);font-size:14px}
+    .empty-icon{font-size:36px;display:block;margin-bottom:10px;opacity:.4}
+
+    /* ===== Settings Tab ===== */
+    .settings-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden}
+    .settings-section-header{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer}
+    .settings-section-title{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+    .sec-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+    .settings-section-body{display:none;border-top:1px solid var(--border)}
+    .settings-section-body.open{display:block}
+    .setting-row{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--border)}
+    .setting-row:last-child{border-bottom:none}
+    .setting-row-name{flex:1;font-size:13px;color:var(--text)}
+    .budget-input-field{
+      background:var(--input-bg);border:1px solid var(--border);border-radius:6px;
+      color:var(--text);font-family:inherit;font-size:13px;padding:6px 10px;
+      outline:none;width:110px;text-align:right;-webkit-appearance:none;transition:border-color .2s;
+    }
+    .budget-input-field:focus{border-color:var(--border-focus)}
+    .cat-del-btn{background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:16px;padding:2px 6px;opacity:.5;transition:opacity .15s}
+    .cat-del-btn:active{opacity:1;color:var(--danger)}
+    .add-cat-row{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--border)}
+    .add-cat-input{flex:1;background:var(--input-bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:inherit;font-size:13px;padding:8px 10px;outline:none;-webkit-appearance:none}
+    .add-cat-input:focus{border-color:var(--border-focus)}
+    .add-cat-btn{padding:8px 14px;background:rgba(139,92,246,.2);border:1px solid rgba(139,92,246,.4);border-radius:6px;color:#c4b5fd;font-size:13px;font-family:inherit;cursor:pointer;white-space:nowrap}
+    .add-cat-btn:active{opacity:.7}
+    .data-btn{width:100%;padding:13px;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px;font-family:inherit;cursor:pointer;text-align:left;margin-bottom:8px}
+    .data-btn:last-child{margin-bottom:0}
+    .data-btn:active{opacity:.7}
+    .data-btn.danger{color:var(--danger)}
+
+    /* ===== Modal ===== */
+    .modal-overlay{position:fixed;inset:0;background:var(--modal-bg);z-index:100;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+    .modal-overlay.hidden{display:none}
+    .modal{background:var(--surface-solid);border:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0;width:100%;max-width:580px;padding:20px 20px calc(20px + var(--safe-bottom));max-height:80vh;overflow-y:auto}
+    .modal h3{font-size:16px;font-weight:700;margin-bottom:16px;color:var(--text)}
+    .modal-actions{display:flex;gap:8px;margin-top:16px}
+    .modal-btn{flex:1;padding:12px;border-radius:var(--radius-sm);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;border:none}
+    .modal-btn.primary{background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff}
+    .modal-btn.secondary{background:var(--input-bg);border:1px solid var(--border);color:var(--text-muted)}
+    .modal-btn:active{opacity:.8}
+    .modal-edit-field{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:inherit;font-size:15px;padding:12px 14px;outline:none;margin-bottom:10px;-webkit-appearance:none}
+    .modal-edit-field:focus{border-color:var(--border-focus)}
+
+    /* ===== Toast ===== */
+    .toast{
+      position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom) + 12px);
+      left:50%;transform:translateX(-50%);
+      background:#1e1e2a;border:1px solid var(--border);
+      border-radius:12px;padding:10px 18px;font-size:13px;color:var(--text);
+      z-index:200;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.4);
+      animation:toastIn .25s ease;
+    }
+    [data-theme="light"] .toast{background:#fff;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+    @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+    @media(max-width:400px){.kpi-val{font-size:17px}.amount-input{font-size:28px}}
+  </style>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div class="loading-screen" id="loadingScreen">
+  <div class="spinner"></div>
+  <div class="loading-text">データを読み込んでいます...</div>
+</div>
+
+<!-- PIN Screen -->
+<div class="pin-screen hidden" id="pinScreen">
+  <div class="pin-icon">🔐</div>
+  <div class="pin-title" id="pinTitle">PINを入力</div>
+  <div class="pin-sub" id="pinSub">家計簿にアクセスするには4桁のPINが必要です</div>
+  <div class="pin-dots" id="pinDots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+  </div>
+  <div class="pin-keypad">
+    <button class="pin-key" onclick="pinInput('1')">1</button>
+    <button class="pin-key" onclick="pinInput('2')">2</button>
+    <button class="pin-key" onclick="pinInput('3')">3</button>
+    <button class="pin-key" onclick="pinInput('4')">4</button>
+    <button class="pin-key" onclick="pinInput('5')">5</button>
+    <button class="pin-key" onclick="pinInput('6')">6</button>
+    <button class="pin-key" onclick="pinInput('7')">7</button>
+    <button class="pin-key" onclick="pinInput('8')">8</button>
+    <button class="pin-key" onclick="pinInput('9')">9</button>
+    <button class="pin-key empty"></button>
+    <button class="pin-key" onclick="pinInput('0')">0</button>
+    <button class="pin-key del" onclick="pinDelete()">⌫</button>
+  </div>
+  <div class="pin-error" id="pinError"></div>
+  <button class="pin-reset" id="pinResetBtn" onclick="resetPin()" style="display:none">PINをリセット（全データ削除）</button>
+</div>
+
+<!-- Top Header -->
+<header class="top-header">
+  <h1>家計簿 2026</h1>
+  <div class="sync-indicator syncing" id="syncDot" title="同期状態"></div>
+  <button class="hdr-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
+</header>
+
+<!-- DASHBOARD TAB -->
+<div class="tab active" id="tab-dashboard">
+  <div class="month-nav">
+    <button onclick="changeMonth(-1)">‹</button>
+    <span class="month-label" id="monthLabel"></span>
+    <button onclick="changeMonth(1)">›</button>
+  </div>
+  <div class="kpi-grid" id="kpiGrid"></div>
+  <section class="blk">
+    <div class="card budget-section" id="budgetBars"></div>
+  </section>
+  <section class="blk">
+    <div class="card">
+      <div class="card-title" style="padding:16px 16px 0">支出内訳</div>
+      <div class="chart-row" id="chartArea"></div>
+    </div>
+  </section>
+  <section class="blk">
+    <div class="card">
+      <button class="annual-toggle" onclick="toggleAnnual()">
+        <span>年間サマリー</span>
+        <span class="chev" id="annualChev">▼</span>
+      </button>
+      <div class="annual-body" id="annualBody">
+        <div id="annualTable"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- INPUT TAB -->
+<div class="tab" id="tab-input">
+  <div class="amount-wrap">
+    <div class="amount-label">金額（円）</div>
+    <input class="amount-input" type="number" id="amountInput" placeholder="0" inputmode="decimal" />
+  </div>
+  <div class="section-tabs" id="sectionTabs"></div>
+  <div class="form-fields">
+    <div class="form-field">
+      <span class="field-label">カテゴリ</span>
+      <select class="field-input" id="catInput"></select>
+    </div>
+    <div class="form-field">
+      <span class="field-label">日付</span>
+      <input class="field-input" type="date" id="dateInput" />
+    </div>
+    <div class="form-field">
+      <span class="field-label">メモ</span>
+      <input class="field-input" type="text" id="memoInput" placeholder="任意" autocomplete="off" />
+    </div>
+  </div>
+  <button class="submit-btn" onclick="addTxn()">記録する</button>
+</div>
+
+<!-- LIST TAB -->
+<div class="tab" id="tab-list">
+  <div class="month-nav" style="margin-bottom:10px">
+    <button onclick="changeListMonth(-1)">‹</button>
+    <span class="month-label" id="listMonthLabel"></span>
+    <button onclick="changeListMonth(1)">›</button>
+  </div>
+  <div class="list-filters" id="listFilters"></div>
+  <div class="search-wrap">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input class="search-input" type="text" id="listSearch" placeholder="検索..." oninput="renderList()" autocomplete="off" />
+  </div>
+  <div id="listContent"></div>
+</div>
+
+<!-- SETTINGS TAB -->
+<div class="tab" id="tab-settings">
+  <section class="blk">
+    <div class="card-title">カテゴリ・予算管理</div>
+    <div id="settingsSections"></div>
+  </section>
+  <section class="blk">
+    <div class="card-title">データ管理</div>
+    <div class="settings-section">
+      <div class="settings-section-body open">
+        <div style="padding:12px 16px">
+          <button class="data-btn" onclick="exportData()">📤 データをエクスポート（JSON）</button>
+          <button class="data-btn" onclick="document.getElementById('importFile').click()">📥 データをインポート（JSON）</button>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)" />
+          <button class="data-btn" onclick="changePinFlow()">🔑 PINを変更</button>
+          <button class="data-btn danger" onclick="clearAllData()">🗑 全データを削除</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-dashboard" onclick="showTab('dashboard')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+      <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+    </svg>
+    ホーム
+  </button>
+  <button class="nav-btn" id="nav-input" onclick="showTab('input')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+    </svg>
+    入力
+  </button>
+  <button class="nav-btn" id="nav-list" onclick="showTab('list')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+      <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+    </svg>
+    明細
+  </button>
+  <button class="nav-btn" id="nav-settings" onclick="showTab('settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+    設定
+  </button>
+</nav>
+
+<!-- Edit Modal -->
+<div class="modal-overlay hidden" id="editModal">
+  <div class="modal">
+    <h3>明細を編集</h3>
+    <input class="modal-edit-field" type="number" id="editAmount" placeholder="金額" inputmode="decimal" />
+    <select class="modal-edit-field" id="editSection" onchange="updateEditCats()"></select>
+    <select class="modal-edit-field" id="editCat"></select>
+    <input class="modal-edit-field" type="date" id="editDate" />
+    <input class="modal-edit-field" type="text" id="editMemo" placeholder="メモ（任意）" autocomplete="off" />
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closeEditModal()">キャンセル</button>
+      <button class="modal-btn primary" onclick="saveEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+<script>
+// ===== Firebase 初期化 =====
+const firebaseConfig = {
+  apiKey: "AIzaSyBtCajxrX3c2h9-Goi2mxAxkqRK7daAY24",
+  authDomain: "kakeibo-2026-3d0a9.firebaseapp.com",
+  databaseURL: "https://kakeibo-2026-3d0a9-default-rtdb.firebaseio.com",
+  projectId: "kakeibo-2026-3d0a9",
+  storageBucket: "kakeibo-2026-3d0a9.firebasestorage.app",
+  messagingSenderId: "392292905113",
+  appId: "1:392292905113:web:ef97ea08c3772921c3c808"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ===== Constants =====
+const SECTIONS = ['収入','固定費','変動費【家族】','変動費【龍希】','変動費【美穂】','返済額'];
+const IS_INCOME = { '収入': true };
+const SEC_COLORS = {
+  '収入':'#4472C4','固定費':'#70AD47','変動費【家族】':'#ED7D31',
+  '変動費【龍希】':'#4AAFDB','変動費【美穂】':'#E85D7A','返済額':'#9E9E9E',
+};
+const DEFAULT_CATS = {
+  '収入':['夫収入','妻収入'],
+  '固定費':['家賃','光熱費','通信費','保険料'],
+  '変動費【家族】':['食費','外食費','日用品','子供関連'],
+  '変動費【龍希】':['外食費','サブスク','美容費','雑費'],
+  '変動費【美穂】':['外食費','サブスク','美容費','雑費'],
+  '返済額':['車ローン','時計ローン','繰上げ返済'],
+};
+const WEEKDAYS = ['日','月','火','水','木','金','土'];
+
+// ===== State =====
+let txns = [];
+let cats = deepCopy(DEFAULT_CATS);
+let budgets = {};
+let isDark = localStorage.getItem('kk_theme') !== 'light';
+let isLoaded = false;
+
+const now = new Date();
+let dashYear  = 2026;
+let dashMonth = now.getMonth() + 1;
+let listYear  = now.getFullYear();
+let listMonth = now.getMonth() + 1;
+let listSecFilter = 'all';
+let inputSec  = SECTIONS[0];
+let editingId = null;
+
+// ===== Theme =====
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('themeBtn').textContent = isDark ? '🌙' : '☀️';
+  document.getElementById('themeColorMeta').content = isDark ? '#0f0f13' : '#f0f2f8';
+}
+function toggleTheme() {
+  isDark = !isDark;
+  localStorage.setItem('kk_theme', isDark ? 'dark' : 'light');
+  applyTheme();
+}
+applyTheme();
+
+// ===== Utilities =====
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmt(n) { if (n==null||isNaN(n)) return '¥0'; return '¥'+Math.abs(Math.round(n)).toLocaleString('ja-JP'); }
+function fmtSigned(n) { if (!n) return '±¥0'; return (n>0?'+':'-')+'¥'+Math.abs(Math.round(n)).toLocaleString('ja-JP'); }
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function monthStr(y,m) { return `${y}年${m}月`; }
+function deepCopy(o) { return JSON.parse(JSON.stringify(o)); }
+
+// ===== Firebase 同期 =====
+function setSyncStatus(status) {
+  const dot = document.getElementById('syncDot');
+  dot.className = 'sync-indicator ' + status;
+}
+function save() {
+  setSyncStatus('syncing');
+  const obj = {};
+  txns.forEach(t => { obj[t.id] = t; });
+  db.ref('txns').set(obj).then(() => setSyncStatus('online')).catch(() => setSyncStatus('offline'));
+}
+function saveCats() {
+  db.ref('cats').set(cats);
+}
+function saveBudgets() {
+  db.ref('budgets').set(budgets);
+}
+function delTxnFromDB(id) {
+  setSyncStatus('syncing');
+  db.ref('txns/' + id).remove().then(() => setSyncStatus('online')).catch(() => setSyncStatus('offline'));
+}
+
+// ===== リアルタイムリスナー =====
+function setupListeners() {
+  // 接続状態の監視
+  db.ref('.info/connected').on('value', snap => {
+    setSyncStatus(snap.val() ? 'online' : 'offline');
+  });
+
+  // データの監視
+  db.ref('/').on('value', snap => {
+    const data = snap.val() || {};
+    txns    = Object.values(data.txns    || {}).sort((a,b) => b.date.localeCompare(a.date));
+    cats    = data.cats    || deepCopy(DEFAULT_CATS);
+    budgets = data.budgets || {};
+
+    if (!isLoaded) {
+      isLoaded = true;
+      checkPin();
+    } else {
+      renderCurrentTab();
+    }
+  }, err => {
+    // ネットワークエラー時もPINチェックへ
+    if (!isLoaded) { isLoaded = true; checkPin(); }
+    setSyncStatus('offline');
+  });
+}
+
+function renderCurrentTab() {
+  const active = document.querySelector('.tab.active');
+  if (!active) return;
+  const id = active.id.replace('tab-','');
+  if (id === 'dashboard') renderDashboard();
+  else if (id === 'list')  renderList();
+  else if (id === 'settings') renderSettings();
+}
+
+// ===== PIN 管理 =====
+let pinBuffer = '';
+let pinMode = 'verify'; // 'verify' | 'set' | 'change_old' | 'change_new'
+
+function checkPin() {
+  document.getElementById('loadingScreen').classList.add('hidden');
+  db.ref('pin').once('value').then(snap => {
+    if (!snap.val()) {
+      // PINが未設定 → 設定画面
+      showPinScreen('set');
+    } else {
+      // PIN検証
+      showPinScreen('verify');
+    }
+  });
+}
+
+function showPinScreen(mode) {
+  pinMode = mode;
+  pinBuffer = '';
+  updatePinDots();
+  document.getElementById('pinError').textContent = '';
+  document.getElementById('pinScreen').classList.remove('hidden');
+  if (mode === 'set') {
+    document.getElementById('pinTitle').textContent = '4桁のPINを設定';
+    document.getElementById('pinSub').textContent = '2人で共有するPINコードを決めてください';
+    document.getElementById('pinResetBtn').style.display = 'none';
+  } else if (mode === 'verify') {
+    document.getElementById('pinTitle').textContent = 'PINを入力';
+    document.getElementById('pinSub').textContent = '家計簿にアクセスするには4桁のPINが必要です';
+    document.getElementById('pinResetBtn').style.display = 'block';
+  } else if (mode === 'change_old') {
+    document.getElementById('pinTitle').textContent = '現在のPINを入力';
+    document.getElementById('pinSub').textContent = 'まず現在のPINを入力してください';
+    document.getElementById('pinResetBtn').style.display = 'none';
+  } else if (mode === 'change_new') {
+    document.getElementById('pinTitle').textContent = '新しいPINを入力';
+    document.getElementById('pinSub').textContent = '新しい4桁のPINを入力してください';
+    document.getElementById('pinResetBtn').style.display = 'none';
+  }
+}
+
+function pinInput(digit) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += digit;
+  updatePinDots();
+  if (pinBuffer.length === 4) {
+    setTimeout(() => processPinInput(), 200);
+  }
+}
+function pinDelete() {
+  pinBuffer = pinBuffer.slice(0,-1);
+  updatePinDots();
+  document.getElementById('pinError').textContent = '';
+}
+function updatePinDots() {
+  for (let i=0;i<4;i++) {
+    document.getElementById('pd'+i).classList.toggle('filled', i < pinBuffer.length);
+  }
+}
+
+function processPinInput() {
+  const hash = simpleHash(pinBuffer);
+  if (pinMode === 'set' || pinMode === 'change_new') {
+    db.ref('pin').set(hash).then(() => {
+      hidePinScreen();
+      showToast('PINを設定しました 🔐');
+    });
+  } else if (pinMode === 'verify') {
+    db.ref('pin').once('value').then(snap => {
+      if (snap.val() === hash) {
+        hidePinScreen();
+      } else {
+        document.getElementById('pinError').textContent = 'PINが違います';
+        pinBuffer = '';
+        updatePinDots();
+        // 振動
+        if (navigator.vibrate) navigator.vibrate(200);
+      }
+    });
+  } else if (pinMode === 'change_old') {
+    db.ref('pin').once('value').then(snap => {
+      if (snap.val() === hash) {
+        pinBuffer = '';
+        showPinScreen('change_new');
+      } else {
+        document.getElementById('pinError').textContent = 'PINが違います';
+        pinBuffer = '';
+        updatePinDots();
+      }
+    });
+  }
+}
+
+function hidePinScreen() {
+  document.getElementById('pinScreen').classList.add('hidden');
+  renderDashboard();
+  renderInputTab();
+  document.getElementById('dateInput').value = todayStr();
+}
+
+function changePinFlow() {
+  showPinScreen('change_old');
+}
+
+function resetPin() {
+  if (!confirm('PINとすべてのデータを削除します。よろしいですか？')) return;
+  db.ref('/').remove().then(() => {
+    isLoaded = false;
+    txns = []; cats = deepCopy(DEFAULT_CATS); budgets = {};
+    showPinScreen('set');
+  });
+}
+
+function simpleHash(str) {
+  let hash = 0;
+  for (let i=0;i<str.length;i++) {
+    hash = ((hash<<5)-hash)+str.charCodeAt(i);
+    hash |= 0;
+  }
+  return hash.toString(16);
+}
+
+// ===== Calculations =====
+function txnsForMonth(y,m) {
+  return txns.filter(t => { const d=new Date(t.date); return d.getFullYear()===y&&d.getMonth()+1===m; });
+}
+function secTotal(y,m,sec) { return txnsForMonth(y,m).filter(t=>t.section===sec).reduce((s,t)=>s+t.amount,0); }
+function incomeTotal(y,m) { return secTotal(y,m,'収入'); }
+function expenseTotal(y,m) { return SECTIONS.filter(s=>!IS_INCOME[s]).reduce((s,sec)=>s+secTotal(y,m,sec),0); }
+function balance(y,m) { return incomeTotal(y,m)-expenseTotal(y,m); }
+function annualBalance(y) { let t=0; for(let m=1;m<=12;m++) t+=balance(y,m); return t; }
+function budgetForSec(sec) { return (cats[sec]||[]).reduce((s,c)=>s+(budgets[`${sec}::${c}`]||0),0); }
+
+// ===== Tab Navigation =====
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('nav-'+name).classList.add('active');
+  if (name==='dashboard') renderDashboard();
+  if (name==='input')     renderInputTab();
+  if (name==='list')      renderList();
+  if (name==='settings')  renderSettings();
+}
+
+// ===== Dashboard =====
+function changeMonth(d) {
+  dashMonth+=d;
+  if(dashMonth>12){dashMonth=1;dashYear++;}
+  if(dashMonth<1){dashMonth=12;dashYear--;}
+  renderDashboard();
+}
+function renderDashboard() {
+  document.getElementById('monthLabel').textContent = monthStr(dashYear,dashMonth);
+  const inc=incomeTotal(dashYear,dashMonth), exp=expenseTotal(dashYear,dashMonth);
+  const bal=balance(dashYear,dashMonth), ann=annualBalance(dashYear);
+  const budInc=budgetForSec('収入');
+  const budExp=SECTIONS.filter(s=>!IS_INCOME[s]).reduce((s,sec)=>s+budgetForSec(sec),0);
+
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi-card income">
+      <div class="kpi-label">今月の収入</div>
+      <div class="kpi-val">${fmt(inc)}</div>
+      <div class="kpi-diff ${!budInc?'neu':inc>=budInc?'pos':'neg'}">${budInc?fmtSigned(inc-budInc)+' vs予算':'予算未設定'}</div>
+    </div>
+    <div class="kpi-card expense">
+      <div class="kpi-label">今月の支出</div>
+      <div class="kpi-val">${fmt(exp)}</div>
+      <div class="kpi-diff ${!budExp?'neu':exp<=budExp?'pos':'neg'}">${budExp?fmtSigned(exp-budExp)+' vs予算':'予算未設定'}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">今月の残高</div>
+      <div class="kpi-val" style="color:${bal<0?'var(--danger)':'var(--green)'}">${fmt(bal)}</div>
+      <div class="kpi-diff ${bal>=0?'pos':'neg'}">${bal>=0?'黒字':'赤字'}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">年間累計残高</div>
+      <div class="kpi-val" style="color:${ann<0?'var(--danger)':'var(--accent)'}">${fmt(ann)}</div>
+      <div class="kpi-diff neu">${dashYear}年 累計</div>
+    </div>`;
+
+  const expSecs = SECTIONS.filter(s=>!IS_INCOME[s]);
+  let barsHtml = '<div class="card-title">予算達成率</div>';
+  expSecs.forEach(sec => {
+    const act=secTotal(dashYear,dashMonth,sec), bud=budgetForSec(sec);
+    const pct=bud>0?Math.min(100,Math.round(act/bud*100)):0;
+    const over=bud>0&&act>bud;
+    barsHtml+=`
+      <div class="budget-row">
+        <div class="budget-row-header">
+          <span class="budget-sec-name" style="color:${SEC_COLORS[sec]}">${esc(sec)}</span>
+          <span class="budget-amounts">${fmt(act)}${bud?' / '+fmt(bud):' (予算未設定)'}</span>
+        </div>
+        <div class="budget-track"><div class="budget-fill" style="width:${pct}%;background:${over?'var(--danger)':SEC_COLORS[sec]}"></div></div>
+        <div class="budget-pct">${bud?pct+'%':act?fmt(act):'-'}</div>
+      </div>`;
+  });
+  document.getElementById('budgetBars').innerHTML = barsHtml;
+
+  const chartData = expSecs.map(s=>({label:s,value:secTotal(dashYear,dashMonth,s),color:SEC_COLORS[s]})).filter(d=>d.value>0);
+  const totalExp = chartData.reduce((s,d)=>s+d.value,0);
+  const legendHtml = chartData.length
+    ? chartData.map(d=>`<div class="legend-item"><div class="legend-dot" style="background:${d.color}"></div><span>${esc(d.label)}</span><span class="legend-pct">${totalExp?Math.round(d.value/totalExp*100)+'%':'0%'}</span></div>`).join('')
+    : '<div style="font-size:12px;color:var(--text-muted)">データなし</div>';
+  document.getElementById('chartArea').innerHTML = `
+    <div class="donut-wrap">
+      <svg width="120" height="120" viewBox="0 0 120 120">
+        ${buildDonut(chartData,60,60,50,32)}
+        ${!chartData.length?'<circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="18"/>':''}
+      </svg>
+      <div class="donut-center"><div class="donut-center-val">${fmt(totalExp)}</div><div class="donut-center-label">総支出</div></div>
+    </div>
+    <div class="chart-legend">${legendHtml}</div>`;
+  renderAnnualTable();
+}
+
+function buildDonut(data,cx,cy,r,hole) {
+  if(!data.length) return '';
+  const total=data.reduce((s,d)=>s+d.value,0);
+  if(!total) return '';
+  let paths='',angle=-90;
+  data.forEach(d=>{
+    if(!d.value) return;
+    const pct=d.value/total;
+    const s=angle*Math.PI/180, e=(angle+pct*360)*Math.PI/180;
+    const large=pct>.5?1:0;
+    const ox1=cx+r*Math.cos(s),oy1=cy+r*Math.sin(s);
+    const ox2=cx+r*Math.cos(e),oy2=cy+r*Math.sin(e);
+    const ix1=cx+hole*Math.cos(s),iy1=cy+hole*Math.sin(s);
+    const ix2=cx+hole*Math.cos(e),iy2=cy+hole*Math.sin(e);
+    paths+=`<path d="M${ox1},${oy1} A${r},${r} 0 ${large},1 ${ox2},${oy2} L${ix2},${iy2} A${hole},${hole} 0 ${large},0 ${ix1},${iy1} Z" fill="${d.color}"/>`;
+    angle+=pct*360;
+  });
+  return paths;
+}
+
+function toggleAnnual() {
+  const body=document.getElementById('annualBody'), chev=document.getElementById('annualChev');
+  const open=body.classList.toggle('open');
+  chev.classList.toggle('open',open);
+  if(open) renderAnnualTable();
+}
+function renderAnnualTable() {
+  const months=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  let html=`<table class="annual-table"><tr><th>項目</th>${months.map(m=>`<th>${m}</th>`).join('')}</tr>`;
+  [{label:'収入',fn:(y,m)=>incomeTotal(y,m),cls:'td-pos'},
+   {label:'支出',fn:(y,m)=>expenseTotal(y,m),cls:'td-neg'},
+   {label:'残高',fn:(y,m)=>balance(y,m),cls:''}].forEach(row=>{
+    html+=`<tr><td>${row.label}</td>`;
+    for(let m=1;m<=12;m++){const v=row.fn(dashYear,m);const cls=row.cls||(v>=0?'td-pos':'td-neg');html+=`<td class="${cls}">${v?fmt(v):'-'}</td>`;}
+    html+='</tr>';
+  });
+  html+='</table>';
+  document.getElementById('annualTable').innerHTML=html;
+}
+
+// ===== Input Tab =====
+function renderInputTab() {
+  document.getElementById('sectionTabs').innerHTML = SECTIONS.map(s=>
+    `<button class="sec-tab ${inputSec===s?'active':''}"
+             style="${inputSec===s?`background:${SEC_COLORS[s]};border-color:${SEC_COLORS[s]}`:''}"
+             onclick="selectInputSec('${esc(s)}')">${esc(s)}</button>`
+  ).join('');
+  document.getElementById('catInput').innerHTML = (cats[inputSec]||[]).map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  if(!document.getElementById('dateInput').value) document.getElementById('dateInput').value=todayStr();
+}
+function selectInputSec(sec) { inputSec=sec; renderInputTab(); }
+function addTxn() {
+  const amt=parseFloat(document.getElementById('amountInput').value);
+  if(!amt||amt<=0){showToast('金額を入力してください');return;}
+  const cat=document.getElementById('catInput').value;
+  const date=document.getElementById('dateInput').value;
+  const memo=document.getElementById('memoInput').value.trim();
+  if(!date){showToast('日付を入力してください');return;}
+  const id=Date.now();
+  const txn={id,date,section:inputSec,category:cat,amount:amt,memo};
+  setSyncStatus('syncing');
+  db.ref('txns/'+id).set(txn).then(()=>{
+    setSyncStatus('online');
+    showToast(`記録しました: ${fmt(amt)}`);
+  }).catch(()=>setSyncStatus('offline'));
+  document.getElementById('amountInput').value='';
+  document.getElementById('memoInput').value='';
+}
+
+// ===== List Tab =====
+function changeListMonth(d) {
+  listMonth+=d;
+  if(listMonth>12){listMonth=1;listYear++;}
+  if(listMonth<1){listMonth=12;listYear--;}
+  renderList();
+}
+function renderList() {
+  document.getElementById('listMonthLabel').textContent=monthStr(listYear,listMonth);
+  document.getElementById('listFilters').innerHTML=
+    ['all',...SECTIONS].map(s=>`
+      <button class="filter-chip ${listSecFilter===s?'active':''}"
+              onclick="setListFilter('${esc(s)}')"
+              ${s!=='all'?`style="${listSecFilter===s?`background:${SEC_COLORS[s]}22;border-color:${SEC_COLORS[s]}90;color:${SEC_COLORS[s]}`:''}"`:''}>
+        ${s==='all'?'すべて':esc(s)}
+      </button>`).join('');
+
+  const q=(document.getElementById('listSearch')?.value||'').trim().toLowerCase();
+  let items=txnsForMonth(listYear,listMonth);
+  if(listSecFilter!=='all') items=items.filter(t=>t.section===listSecFilter);
+  if(q) items=items.filter(t=>t.category.toLowerCase().includes(q)||(t.memo||'').toLowerCase().includes(q)||t.section.toLowerCase().includes(q));
+
+  if(!items.length){
+    document.getElementById('listContent').innerHTML=`<div class="empty-list"><span class="empty-icon">📋</span>明細がありません</div>`;
+    return;
+  }
+  const byDate={};
+  items.forEach(t=>{if(!byDate[t.date])byDate[t.date]=[];byDate[t.date].push(t);});
+  let html='';
+  Object.keys(byDate).sort((a,b)=>b.localeCompare(a)).forEach(date=>{
+    const d=new Date(date),dow=WEEKDAYS[d.getDay()],m=d.getMonth()+1,day=d.getDate();
+    const dayTotal=byDate[date].reduce((s,t)=>s+(IS_INCOME[t.section]?t.amount:-t.amount),0);
+    html+=`<div class="txn-group">
+      <div class="txn-date-header">${m}/${day}（${dow}）<span style="float:right;color:${dayTotal>=0?'var(--green)':'var(--danger)'}">${fmtSigned(dayTotal)}</span></div>
+      <div class="card txn-list-card">${byDate[date].map(t=>buildTxnItem(t)).join('')}</div>
+    </div>`;
+  });
+  document.getElementById('listContent').innerHTML=html;
+}
+function setListFilter(f){listSecFilter=f;renderList();}
+function buildTxnItem(t) {
+  return `<div class="txn-item">
+    <div class="txn-dot" style="background:${SEC_COLORS[t.section]||'var(--text-muted)'}"></div>
+    <div class="txn-body" onclick="openEdit(${t.id})">
+      <div class="txn-cat">${esc(t.category)}</div>
+      <div class="txn-meta">${esc(t.section)}${t.memo?' · '+esc(t.memo):''}</div>
+    </div>
+    <div class="txn-amount ${IS_INCOME[t.section]?'txn-income':'txn-expense'}">${fmt(t.amount)}</div>
+    <button class="txn-del" onclick="delTxn(${t.id})">✕</button>
+  </div>`;
+}
+function delTxn(id) {
+  if(!confirm('この明細を削除しますか？')) return;
+  delTxnFromDB(id);
+}
+
+// ===== Edit Modal =====
+function openEdit(id) {
+  const t=txns.find(t=>t.id===id); if(!t) return;
+  editingId=id;
+  document.getElementById('editAmount').value=t.amount;
+  document.getElementById('editDate').value=t.date;
+  document.getElementById('editMemo').value=t.memo||'';
+  const secEl=document.getElementById('editSection');
+  secEl.innerHTML=SECTIONS.map(s=>`<option value="${esc(s)}"${t.section===s?' selected':''}>${esc(s)}</option>`).join('');
+  updateEditCats(t.category);
+  document.getElementById('editModal').classList.remove('hidden');
+}
+function updateEditCats(selected) {
+  const sec=document.getElementById('editSection').value;
+  document.getElementById('editCat').innerHTML=(cats[sec]||[]).map(c=>`<option value="${esc(c)}"${c===selected?' selected':''}>${esc(c)}</option>`).join('');
+}
+function closeEditModal(){document.getElementById('editModal').classList.add('hidden');editingId=null;}
+function saveEdit() {
+  if(!editingId) return;
+  const amt=parseFloat(document.getElementById('editAmount').value);
+  if(!amt||amt<=0){showToast('金額を入力してください');return;}
+  const txn={
+    id:editingId,
+    amount:amt,
+    section:document.getElementById('editSection').value,
+    category:document.getElementById('editCat').value,
+    date:document.getElementById('editDate').value,
+    memo:document.getElementById('editMemo').value.trim(),
+  };
+  setSyncStatus('syncing');
+  db.ref('txns/'+editingId).set(txn).then(()=>{setSyncStatus('online');showToast('更新しました');}).catch(()=>setSyncStatus('offline'));
+  closeEditModal();
+}
+
+// ===== Settings =====
+function renderSettings() {
+  let html='';
+  SECTIONS.forEach(sec=>{
+    const isInc=IS_INCOME[sec];
+    html+=`<div class="settings-section">
+      <div class="settings-section-header" onclick="toggleSettingsSec('${esc(sec)}')">
+        <div class="settings-section-title"><div class="sec-dot" style="background:${SEC_COLORS[sec]}"></div>${esc(sec)}</div>
+        <span style="font-size:10px;color:var(--text-muted)">▼</span>
+      </div>
+      <div class="settings-section-body" id="ssb-${esc(sec)}">
+        ${(cats[sec]||[]).map(c=>`
+          <div class="setting-row">
+            <span class="setting-row-name">${esc(c)}</span>
+            ${!isInc?`<input class="budget-input-field" type="number" inputmode="decimal" placeholder="予算(円)" value="${budgets[sec+'::'+c]||''}" onchange="setBudget('${esc(sec)}','${esc(c)}',this.value)" />`:''}
+            <button class="cat-del-btn" onclick="delCat('${esc(sec)}','${esc(c)}')">✕</button>
+          </div>`).join('')}
+        <div class="add-cat-row">
+          <input class="add-cat-input" type="text" id="addcat-${esc(sec)}" placeholder="カテゴリを追加" />
+          <button class="add-cat-btn" onclick="addCat('${esc(sec)}')">追加</button>
+        </div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('settingsSections').innerHTML=html;
+}
+function toggleSettingsSec(sec){document.getElementById('ssb-'+sec).classList.toggle('open');}
+function addCat(sec) {
+  const inp=document.getElementById('addcat-'+sec), v=inp.value.trim();
+  if(!v) return;
+  if(!cats[sec]) cats[sec]=[];
+  if(cats[sec].includes(v)){showToast('すでに存在します');return;}
+  cats[sec].push(v); saveCats(); inp.value=''; renderSettings();
+}
+function delCat(sec,cat) {
+  cats[sec]=(cats[sec]||[]).filter(c=>c!==cat); saveCats(); renderSettings();
+}
+function setBudget(sec,cat,val) {
+  const v=parseFloat(val), key=`${sec}::${cat}`;
+  if(v>0) budgets[key]=v; else delete budgets[key];
+  saveBudgets();
+}
+
+// ===== Data Export/Import =====
+function exportData() {
+  const blob=new Blob([JSON.stringify({txns,cats,budgets},null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`kakeibo_${new Date().toISOString().slice(0,10).replace(/-/g,'')}.json`;
+  a.click();
+}
+function importData(e) {
+  const file=e.target.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try {
+      const d=JSON.parse(ev.target.result);
+      if(d.txns) { const obj={}; d.txns.forEach(t=>{obj[t.id]=t;}); db.ref('txns').set(obj); }
+      if(d.cats)    db.ref('cats').set(d.cats);
+      if(d.budgets) db.ref('budgets').set(d.budgets);
+      showToast('インポートしました');
+    } catch(err){showToast('ファイルの形式が正しくありません');}
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+function clearAllData() {
+  if(!confirm('すべてのデータを削除します。よろしいですか？')) return;
+  db.ref('txns').remove();
+  db.ref('cats').remove();
+  db.ref('budgets').remove();
+  showToast('削除しました');
+}
+
+// ===== Toast =====
+let toastTimer;
+function showToast(msg) {
+  const ex=document.querySelector('.toast'); if(ex) ex.remove();
+  const el=document.createElement('div'); el.className='toast'; el.textContent=msg;
+  document.body.appendChild(el);
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.remove(),2500);
+}
+
+// ===== 起動 =====
+setupListeners();
+</script>
+</body>
+</html>
