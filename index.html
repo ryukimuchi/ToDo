@@ -1,24 +1,20 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>My Tasks</title>
-
-  <!-- iOS PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="My Tasks">
-  <meta name="theme-color" content="#0f0f13">
-
+  <meta name="theme-color" content="#0f0f13" id="themeColorMeta">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
   <style>
     :root {
       --bg: #0f0f13;
       --surface: rgba(255,255,255,0.04);
-      --surface-hover: rgba(255,255,255,0.07);
+      --surface-solid: #1a1a24;
       --border: rgba(255,255,255,0.08);
       --border-focus: rgba(139,92,246,0.7);
       --text: #e2e2e8;
@@ -29,287 +25,430 @@
       --medium: #fbbf24;
       --low: #34d399;
       --danger: #ef4444;
+      --modal-bg: rgba(0,0,0,0.6);
+      --input-bg: rgba(255,255,255,0.06);
       --radius: 14px;
       --radius-sm: 8px;
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
-      --safe-left: env(safe-area-inset-left, 0px);
-      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-top: env(safe-area-inset-top,0px);
+      --safe-bottom: env(safe-area-inset-bottom,0px);
+      --safe-left: env(safe-area-inset-left,0px);
+      --safe-right: env(safe-area-inset-right,0px);
+    }
+    [data-theme="light"] {
+      --bg: #f0f0f8;
+      --surface: rgba(255,255,255,0.85);
+      --surface-solid: #ffffff;
+      --border: rgba(0,0,0,0.1);
+      --border-focus: rgba(124,58,237,0.6);
+      --text: #1a1a2e;
+      --text-muted: #7070a0;
+      --accent: #7c3aed;
+      --accent2: #0891b2;
+      --high: #dc2626;
+      --medium: #d97706;
+      --low: #059669;
+      --danger: #dc2626;
+      --modal-bg: rgba(0,0,0,0.3);
+      --input-bg: rgba(0,0,0,0.04);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-    html { height: -webkit-fill-available; }
-
-    body {
-      font-family: 'Inter', -apple-system, sans-serif;
-      background: var(--bg);
-      min-height: 100vh;
-      min-height: -webkit-fill-available;
-      display: flex;
-      justify-content: center;
-      padding: calc(48px + var(--safe-top)) calc(16px + var(--safe-right)) calc(80px + var(--safe-bottom)) calc(16px + var(--safe-left));
-      color: var(--text);
-      -webkit-font-smoothing: antialiased;
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html{height:-webkit-fill-available}
+    body{
+      font-family:'Inter',-apple-system,sans-serif;
+      background:var(--bg);
+      min-height:100vh;min-height:-webkit-fill-available;
+      display:flex;justify-content:center;
+      padding:calc(48px + var(--safe-top)) calc(16px + var(--safe-right)) calc(80px + var(--safe-bottom)) calc(16px + var(--safe-left));
+      color:var(--text);-webkit-font-smoothing:antialiased;
+      transition:background .3s,color .3s;
     }
-
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
+    body::before{
+      content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    }
+    [data-theme="dark"] body::before{
       background:
-        radial-gradient(ellipse 60% 50% at 20% 10%, rgba(139,92,246,0.15) 0%, transparent 60%),
-        radial-gradient(ellipse 50% 40% at 80% 80%, rgba(6,182,212,0.1) 0%, transparent 60%);
-      pointer-events: none;
-      z-index: 0;
+        radial-gradient(ellipse 60% 50% at 20% 10%,rgba(139,92,246,.15) 0%,transparent 60%),
+        radial-gradient(ellipse 50% 40% at 80% 80%,rgba(6,182,212,.1) 0%,transparent 60%);
+    }
+    [data-theme="light"] body::before{
+      background:
+        radial-gradient(ellipse 60% 50% at 20% 10%,rgba(139,92,246,.07) 0%,transparent 60%),
+        radial-gradient(ellipse 50% 40% at 80% 80%,rgba(6,182,212,.05) 0%,transparent 60%);
+    }
+    .container{position:relative;z-index:1;width:100%;max-width:580px}
+
+    /* Header */
+    .header{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+    .header-icon{
+      width:40px;height:40px;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      border-radius:12px;display:flex;align-items:center;justify-content:center;
+      font-size:18px;flex-shrink:0;
+    }
+    h1{
+      flex:1;font-size:26px;font-weight:700;letter-spacing:-.5px;
+      background:linear-gradient(135deg,var(--text) 0%,var(--text-muted) 100%);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    }
+    .header-actions{display:flex;gap:8px}
+    .icon-header-btn{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:10px;padding:0;cursor:pointer;font-size:16px;
+      color:var(--text-muted);transition:all .2s;
+      width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+    }
+    .icon-header-btn:active{opacity:.7}
+
+    /* Card */
+    .card{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--radius);backdrop-filter:blur(20px);
+      -webkit-backdrop-filter:blur(20px);transition:background .3s,border-color .3s;
     }
 
-    .container {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      max-width: 580px;
-    }
+    /* Form */
+    .form-card{padding:16px;margin-bottom:12px}
+    .input-main{display:flex;gap:8px;margin-bottom:10px}
 
-    /* ヘッダー */
-    .header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-    .header-icon {
-      width: 40px; height: 40px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px; flex-shrink: 0;
+    input[type="text"],input[type="date"],textarea,select{
+      background:var(--input-bg);border:1px solid var(--border);
+      border-radius:var(--radius-sm);color:var(--text);font-family:inherit;
+      font-size:16px;padding:12px 14px;outline:none;
+      transition:border-color .2s,box-shadow .2s,background .3s;
+      width:100%;-webkit-appearance:none;appearance:none;
     }
-    h1 {
-      font-size: 26px; font-weight: 700; letter-spacing: -0.5px;
-      background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.6) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    textarea{resize:vertical;min-height:68px;line-height:1.5;font-size:14px;padding:10px 14px}
+    input[type="text"]::placeholder,textarea::placeholder{color:var(--text-muted)}
+    input[type="text"]:focus,input[type="date"]:focus,textarea:focus,select:focus{
+      border-color:var(--border-focus);box-shadow:0 0 0 3px rgba(139,92,246,.12);
     }
+    select{
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b6b7e' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right 12px center;
+      background-color:var(--input-bg);padding-right:32px;
+    }
+    select option{background:var(--surface-solid);color:var(--text)}
+    input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.6);cursor:pointer}
 
-    /* カード */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-    }
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+    .form-row .full{grid-column:1/-1}
 
-    /* フォーム */
-    .form-card { padding: 16px; margin-bottom: 12px; }
-    .input-main { display: flex; gap: 8px; margin-bottom: 10px; }
+    /* Tag input */
+    .tag-input-wrap{
+      background:var(--input-bg);border:1px solid var(--border);
+      border-radius:var(--radius-sm);padding:8px 10px;
+      display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+      cursor:text;transition:border-color .2s,box-shadow .2s;margin-bottom:8px;
+    }
+    .tag-input-wrap:focus-within{border-color:var(--border-focus);box-shadow:0 0 0 3px rgba(139,92,246,.12)}
+    .tag-chip{
+      display:flex;align-items:center;gap:4px;
+      background:rgba(6,182,212,.12);color:#67e8f9;
+      border:1px solid rgba(6,182,212,.25);border-radius:6px;
+      padding:2px 8px;font-size:12px;font-weight:500;
+    }
+    [data-theme="light"] .tag-chip{background:rgba(8,145,178,.1);color:#0891b2;border-color:rgba(8,145,178,.3)}
+    .tag-chip button{
+      background:none;border:none;cursor:pointer;
+      color:inherit;opacity:.7;font-size:14px;line-height:1;padding:0 2px;
+    }
+    .tag-chip button:hover{opacity:1}
+    .tag-input-field{
+      background:none;border:none;outline:none;
+      color:var(--text);font-size:14px;font-family:inherit;
+      padding:2px 4px;min-width:80px;flex:1;
+    }
+    .tag-input-field::placeholder{color:var(--text-muted)}
 
-    /* iOSズーム防止のため font-size: 16px */
-    input[type="text"], input[type="date"], select {
-      background: rgba(255,255,255,0.06);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      color: var(--text);
-      font-family: inherit;
-      font-size: 16px;
-      padding: 12px 14px;
-      outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      width: 100%;
-      -webkit-appearance: none;
-      appearance: none;
+    /* Memo toggle */
+    .memo-toggle{
+      background:none;border:none;cursor:pointer;
+      color:var(--text-muted);font-size:13px;font-family:inherit;
+      padding:4px 0;display:block;margin-bottom:4px;
     }
-    input[type="text"]::placeholder { color: var(--text-muted); }
-    input[type="text"]:focus,
-    input[type="date"]:focus,
-    select:focus {
-      border-color: var(--border-focus);
-      box-shadow: 0 0 0 3px rgba(139,92,246,0.12);
-    }
-    select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b6b7e' d='M1 1l5 5 5-5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
-    select option { background: #1e1e2a; color: var(--text); }
-    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
+    .memo-toggle:hover{color:var(--text)}
+    .memo-area{display:none;margin-bottom:8px}
+    .memo-area.open{display:block}
 
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
+    .add-btn{
+      padding:12px 18px;
+      background:linear-gradient(135deg,var(--accent),#7c3aed);
+      color:#fff;border:none;border-radius:var(--radius-sm);
+      font-size:16px;font-weight:600;font-family:inherit;
+      cursor:pointer;white-space:nowrap;flex-shrink:0;
+      min-width:72px;min-height:44px;transition:opacity .2s,transform .15s;
     }
-    .form-row .full { grid-column: 1 / -1; }
+    .add-btn:active{opacity:.8;transform:scale(.97)}
 
-    .add-btn {
-      padding: 12px 18px;
-      background: linear-gradient(135deg, var(--accent), #7c3aed);
-      color: #fff; border: none; border-radius: var(--radius-sm);
-      font-size: 16px; font-weight: 600; font-family: inherit;
-      cursor: pointer; white-space: nowrap; flex-shrink: 0;
-      min-width: 72px; min-height: 44px;
-      transition: opacity 0.2s, transform 0.15s;
+    /* Toolbar */
+    .toolbar-card{padding:12px 14px;margin-bottom:12px}
+    .toolbar-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .toolbar-row+.toolbar-row{margin-top:8px}
+    .search-wrap{flex:1;min-width:120px;position:relative}
+    .search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none}
+    .search-box{padding-left:34px !important}
+    .sort-select{max-width:150px;font-size:13px;padding:8px 28px 8px 10px}
+    .filters{display:flex;gap:5px;flex-wrap:wrap}
+    .filters button{
+      padding:7px 14px;min-height:34px;
+      border:1px solid var(--border);border-radius:20px;
+      background:transparent;font-size:13px;font-weight:500;
+      font-family:inherit;cursor:pointer;color:var(--text-muted);transition:all .2s;
     }
-    .add-btn:active { opacity: 0.8; transform: scale(0.97); }
+    .filters button.active{background:rgba(139,92,246,.2);border-color:rgba(139,92,246,.5);color:#c4b5fd}
+    .cat-manage-btn{
+      padding:7px 12px;min-height:34px;
+      border:1px solid var(--border);border-radius:20px;
+      background:transparent;font-size:12px;font-family:inherit;
+      cursor:pointer;color:var(--text-muted);transition:all .2s;white-space:nowrap;
+    }
+    .cat-manage-btn:hover{border-color:var(--accent);color:var(--text)}
+    .tag-filters{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+    .tag-filter-btn{
+      padding:5px 12px;min-height:30px;
+      border:1px solid rgba(6,182,212,.25);border-radius:20px;
+      background:transparent;font-size:12px;font-weight:500;
+      font-family:inherit;cursor:pointer;color:#67e8f9;transition:all .2s;
+    }
+    [data-theme="light"] .tag-filter-btn{border-color:rgba(8,145,178,.3);color:#0891b2}
+    .tag-filter-btn.active{background:rgba(6,182,212,.12)}
+    [data-theme="light"] .tag-filter-btn.active{background:rgba(8,145,178,.1)}
 
-    /* ツールバー */
-    .toolbar-card {
-      padding: 12px 14px; margin-bottom: 12px;
-      display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    /* List */
+    .list-card{overflow:hidden}
+    .todo-list{list-style:none}
+    .todo-item{
+      display:flex;align-items:flex-start;gap:12px;
+      padding:14px 16px;border-bottom:1px solid var(--border);
+      transition:background .15s;position:relative;
+      user-select:none;-webkit-user-select:none;touch-action:pan-y;
     }
-    .search-wrap { flex: 1; min-width: 120px; position: relative; }
-    .search-wrap svg {
-      position: absolute; left: 11px; top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-muted); pointer-events: none;
-    }
-    .search-box { padding-left: 34px !important; }
+    .todo-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0 2px 2px 0}
+    .todo-item.priority-high::before{background:var(--high)}
+    .todo-item.priority-medium::before{background:var(--medium)}
+    .todo-item.priority-low::before{background:var(--low)}
+    .todo-item:last-child{border-bottom:none}
+    .todo-item.dragging{opacity:.3;background:rgba(139,92,246,.05)}
+    .todo-item.drag-over{border-top:2px solid var(--accent)}
 
-    .filters { display: flex; gap: 5px; flex-wrap: wrap; }
-    .filters button {
-      padding: 7px 14px; min-height: 34px;
-      border: 1px solid var(--border); border-radius: 20px;
-      background: transparent; font-size: 13px; font-weight: 500;
-      font-family: inherit; cursor: pointer; color: var(--text-muted);
-      transition: all 0.2s;
+    /* Checkbox */
+    .checkbox-wrap{width:24px;height:24px;flex-shrink:0;position:relative;cursor:pointer}
+    .checkbox-wrap input{position:absolute;opacity:0;width:100%;height:100%;cursor:pointer;margin:0}
+    .checkbox-box{
+      width:24px;height:24px;border:2px solid rgba(255,255,255,.2);
+      border-radius:7px;display:flex;align-items:center;justify-content:center;transition:all .2s;
     }
-    .filters button.active {
-      background: rgba(139,92,246,0.2);
-      border-color: rgba(139,92,246,0.5);
-      color: #c4b5fd;
-    }
+    [data-theme="light"] .checkbox-box{border-color:rgba(0,0,0,.2)}
+    .checkbox-wrap input:checked~.checkbox-box{background:linear-gradient(135deg,var(--accent),#7c3aed);border-color:transparent}
+    .checkbox-box svg{display:none}
+    .checkbox-wrap input:checked~.checkbox-box svg{display:block}
 
-    /* リスト */
-    .list-card { overflow: hidden; }
-    .todo-list { list-style: none; }
+    .todo-body{flex:1;min-width:0}
+    .todo-text{font-size:15px;font-weight:400;color:var(--text);word-break:break-word;line-height:1.5}
+    .todo-item.done .todo-text{text-decoration:line-through;color:var(--text-muted)}
 
-    .todo-item {
-      display: flex; align-items: flex-start; gap: 12px;
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border);
-      transition: background 0.15s;
-      position: relative;
-      user-select: none; -webkit-user-select: none;
-      touch-action: pan-y;
-    }
-    .todo-item::before {
-      content: ''; position: absolute; left: 0; top: 0; bottom: 0;
-      width: 3px; border-radius: 0 2px 2px 0;
-    }
-    .todo-item.priority-high::before   { background: var(--high); }
-    .todo-item.priority-medium::before { background: var(--medium); }
-    .todo-item.priority-low::before    { background: var(--low); }
-    .todo-item:last-child { border-bottom: none; }
-    .todo-item.dragging { opacity: 0.3; background: rgba(139,92,246,0.05); }
-    .todo-item.drag-over { border-top: 2px solid var(--accent); }
+    .todo-meta{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+    .badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;letter-spacing:.3px;text-transform:uppercase}
+    .p-high   {background:rgba(248,113,113,.15);color:var(--high);  border:1px solid rgba(248,113,113,.25)}
+    .p-medium {background:rgba(251,191,36,.15); color:var(--medium);border:1px solid rgba(251,191,36,.25)}
+    .p-low    {background:rgba(52,211,153,.15); color:var(--low);   border:1px solid rgba(52,211,153,.25)}
+    .cat-badge{background:rgba(139,92,246,.15); color:#c4b5fd;      border:1px solid rgba(139,92,246,.25)}
+    .due-badge{background:rgba(6,182,212,.12);  color:#67e8f9;      border:1px solid rgba(6,182,212,.25)}
+    .due-overdue{background:rgba(239,68,68,.15);color:var(--danger);border:1px solid rgba(239,68,68,.3)}
+    .repeat-badge{background:rgba(52,211,153,.12);color:#34d399;border:1px solid rgba(52,211,153,.25)}
+    .tag-badge{background:rgba(6,182,212,.1);color:#67e8f9;border:1px solid rgba(6,182,212,.2);text-transform:none}
+    [data-theme="light"] .due-badge{color:#0891b2;background:rgba(8,145,178,.1);border-color:rgba(8,145,178,.25)}
+    [data-theme="light"] .tag-badge{color:#0891b2;background:rgba(8,145,178,.08);border-color:rgba(8,145,178,.2)}
 
-    /* カスタムチェックボックス */
-    .checkbox-wrap {
-      width: 24px; height: 24px;
-      flex-shrink: 0; margin-top: 0; position: relative; cursor: pointer;
+    /* Memo preview */
+    .memo-preview{
+      font-size:12px;color:var(--text-muted);margin-top:5px;line-height:1.5;
+      cursor:pointer;transition:color .15s;
     }
-    .checkbox-wrap input {
-      position: absolute; opacity: 0;
-      width: 100%; height: 100%; cursor: pointer; margin: 0;
+    .memo-preview .memo-text{
+      display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
     }
-    .checkbox-box {
-      width: 24px; height: 24px;
-      border: 2px solid rgba(255,255,255,0.2); border-radius: 7px;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s;
-    }
-    .checkbox-wrap input:checked ~ .checkbox-box {
-      background: linear-gradient(135deg, var(--accent), #7c3aed);
-      border-color: transparent;
-    }
-    .checkbox-box svg { display: none; }
-    .checkbox-wrap input:checked ~ .checkbox-box svg { display: block; }
+    .memo-preview.expanded .memo-text{display:block;overflow:visible;-webkit-line-clamp:unset}
+    .memo-preview:hover{color:var(--text)}
 
-    .todo-body { flex: 1; min-width: 0; }
-    .todo-text {
-      font-size: 15px; font-weight: 400; color: var(--text);
-      word-break: break-word; line-height: 1.5;
+    /* Subtasks */
+    .subtask-section{margin-top:8px}
+    .subtask-header{
+      display:flex;align-items:center;gap:8px;cursor:pointer;padding:2px 0;
     }
-    .todo-item.done .todo-text { text-decoration: line-through; color: var(--text-muted); }
+    .subtask-progress{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+    .subtask-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .3s}
+    .subtask-count{font-size:11px;color:var(--text-muted);white-space:nowrap}
+    .subtask-chevron{font-size:10px;color:var(--text-muted);transition:transform .2s;display:inline-block}
+    .subtask-chevron.open{transform:rotate(180deg)}
+    .add-sub-link{
+      background:none;border:none;cursor:pointer;
+      color:var(--text-muted);font-size:12px;font-family:inherit;
+      padding:2px 0;opacity:.6;transition:opacity .2s;
+    }
+    .add-sub-link:hover{opacity:1;color:var(--accent)}
+    .subtask-list{margin-top:6px}
+    .subtask-item{
+      display:flex;align-items:center;gap:8px;padding:5px 0;
+      border-bottom:1px solid rgba(255,255,255,.04);
+    }
+    [data-theme="light"] .subtask-item{border-bottom-color:rgba(0,0,0,.04)}
+    .subtask-item:last-of-type{border-bottom:none}
+    .sub-check{
+      width:18px;height:18px;flex-shrink:0;
+      appearance:none;-webkit-appearance:none;
+      border:2px solid rgba(255,255,255,.2);border-radius:5px;
+      cursor:pointer;background:transparent;position:relative;transition:all .2s;
+    }
+    [data-theme="light"] .sub-check{border-color:rgba(0,0,0,.25)}
+    .sub-check:checked{background:var(--accent);border-color:transparent}
+    .sub-check:checked::after{content:'✓';position:absolute;top:-2px;left:2px;font-size:11px;color:#fff}
+    .sub-text{flex:1;font-size:13px;color:var(--text);word-break:break-word}
+    .sub-text.done{text-decoration:line-through;color:var(--text-muted)}
+    .sub-del{
+      background:none;border:none;cursor:pointer;
+      color:var(--text-muted);font-size:13px;padding:2px 4px;
+      opacity:.4;transition:opacity .15s;
+    }
+    .sub-del:hover{opacity:1;color:var(--danger)}
+    .add-sub-row{display:flex;gap:6px;margin-top:6px}
+    .add-sub-input{font-size:13px !important;padding:8px 10px !important}
+    .add-sub-btn{
+      padding:8px 12px;background:rgba(139,92,246,.2);
+      border:1px solid rgba(139,92,246,.4);border-radius:6px;
+      color:#c4b5fd;font-size:13px;font-family:inherit;
+      cursor:pointer;white-space:nowrap;min-height:36px;
+    }
+    .add-sub-btn:active{opacity:.7}
 
-    .todo-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
-    .badge {
-      font-size: 10px; font-weight: 600; padding: 2px 8px;
-      border-radius: 6px; letter-spacing: 0.3px; text-transform: uppercase;
+    /* Actions */
+    .todo-actions{display:flex;gap:2px;flex-shrink:0}
+    .icon-btn{
+      background:transparent;border:none;cursor:pointer;padding:6px 8px;border-radius:6px;
+      color:var(--text-muted);min-width:36px;min-height:36px;
+      display:flex;align-items:center;justify-content:center;transition:all .15s;
     }
-    .p-high    { background: rgba(248,113,113,0.15); color: var(--high);   border: 1px solid rgba(248,113,113,0.25); }
-    .p-medium  { background: rgba(251,191,36,0.15);  color: var(--medium); border: 1px solid rgba(251,191,36,0.25); }
-    .p-low     { background: rgba(52,211,153,0.15);  color: var(--low);    border: 1px solid rgba(52,211,153,0.25); }
-    .cat-badge { background: rgba(139,92,246,0.15);  color: #c4b5fd;       border: 1px solid rgba(139,92,246,0.25); }
-    .due-badge { background: rgba(6,182,212,0.12);   color: #67e8f9;       border: 1px solid rgba(6,182,212,0.25); }
-    .due-overdue { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+    @media(hover:hover){
+      .icon-btn:hover{background:rgba(255,255,255,.08);color:var(--text)}
+      .icon-btn.del:hover{background:rgba(239,68,68,.15);color:var(--danger)}
+    }
+    .icon-btn:active{opacity:.6}
+    .icon-btn.notify-on{color:#fbbf24}
 
-    /* アクションボタン：常時表示 */
-    .todo-actions { display: flex; gap: 2px; flex-shrink: 0; }
-    .icon-btn {
-      background: transparent; border: none; cursor: pointer;
-      padding: 6px 8px; border-radius: 6px;
-      color: var(--text-muted);
-      min-width: 36px; min-height: 36px;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.15s;
+    /* Edit form */
+    .edit-form{
+      display:none;flex-direction:column;gap:8px;margin-top:10px;
+      background:rgba(255,255,255,.03);border:1px solid var(--border);
+      border-radius:var(--radius-sm);padding:12px;
     }
-    /* PCのみホバースタイル */
-    @media (hover: hover) {
-      .icon-btn:hover { background: rgba(255,255,255,0.08); color: var(--text); }
-      .icon-btn.del:hover { background: rgba(239,68,68,0.15); color: var(--danger); }
+    [data-theme="light"] .edit-form{background:rgba(0,0,0,.02)}
+    .edit-form.open{display:flex}
+    .edit-row{display:flex;gap:6px;flex-wrap:wrap}
+    .edit-row input,.edit-row select{flex:1;min-width:100px}
+    .edit-actions{display:flex;gap:6px}
+    .save-btn{
+      padding:9px 18px;min-height:40px;
+      background:linear-gradient(135deg,var(--accent),#7c3aed);
+      color:#fff;border:none;border-radius:6px;
+      font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;
     }
-    .icon-btn:active { opacity: 0.6; }
+    .save-btn:active{opacity:.8}
+    .cancel-btn{
+      padding:9px 16px;min-height:40px;
+      background:rgba(255,255,255,.06);color:var(--text-muted);
+      border:1px solid var(--border);border-radius:6px;
+      font-size:14px;font-family:inherit;cursor:pointer;
+    }
+    [data-theme="light"] .cancel-btn{background:rgba(0,0,0,.04)}
+    .cancel-btn:active{opacity:.7}
 
-    /* 編集フォーム */
-    .edit-form {
-      display: none; flex-direction: column; gap: 8px; margin-top: 10px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm); padding: 12px;
-    }
-    .edit-form.open { display: flex; }
-    .edit-row { display: flex; gap: 6px; flex-wrap: wrap; }
-    .edit-row input, .edit-row select { flex: 1; min-width: 100px; }
-    .edit-actions { display: flex; gap: 6px; }
-    .save-btn {
-      padding: 9px 18px; min-height: 40px;
-      background: linear-gradient(135deg, var(--accent), #7c3aed);
-      color: #fff; border: none; border-radius: 6px;
-      font-size: 14px; font-weight: 600; font-family: inherit; cursor: pointer;
-    }
-    .save-btn:active { opacity: 0.8; }
-    .cancel-btn {
-      padding: 9px 16px; min-height: 40px;
-      background: rgba(255,255,255,0.06); color: var(--text-muted);
-      border: 1px solid var(--border); border-radius: 6px;
-      font-size: 14px; font-family: inherit; cursor: pointer;
-    }
-    .cancel-btn:active { opacity: 0.7; }
+    /* Empty */
+    .empty{text-align:center;padding:48px 0;color:var(--text-muted);font-size:14px}
+    .empty-icon{font-size:36px;display:block;margin-bottom:10px;opacity:.4}
 
-    /* 空状態 */
-    .empty { text-align: center; padding: 48px 0; color: var(--text-muted); font-size: 14px; }
-    .empty-icon { font-size: 36px; display: block; margin-bottom: 10px; opacity: 0.4; }
-
-    /* フッター */
-    .footer {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 16px; border-top: 1px solid var(--border);
-      font-size: 12px; color: var(--text-muted);
+    /* Footer */
+    .footer{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:12px 16px;border-top:1px solid var(--border);
+      font-size:12px;color:var(--text-muted);
     }
-    .clear-btn {
-      background: none; border: none; cursor: pointer;
-      color: var(--text-muted); font-size: 12px; font-family: inherit;
-      padding: 6px 0; min-height: 36px;
+    .clear-btn{
+      background:none;border:none;cursor:pointer;
+      color:var(--text-muted);font-size:12px;font-family:inherit;
+      padding:6px 0;min-height:36px;
     }
-    .clear-btn:active { color: var(--danger); }
+    .clear-btn:active{color:var(--danger)}
 
-    /* アニメーション */
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: translateY(0); }
+    /* Modal */
+    .modal-overlay{
+      position:fixed;inset:0;background:var(--modal-bg);z-index:100;
+      display:flex;align-items:center;justify-content:center;
+      padding:16px;backdrop-filter:blur(4px);
     }
-    .todo-item { animation: fadeIn 0.2s ease; }
+    .modal-overlay.hidden{display:none}
+    .modal{
+      background:var(--surface-solid);border:1px solid var(--border);
+      border-radius:var(--radius);width:100%;max-width:400px;
+      padding:20px;max-height:80vh;overflow-y:auto;
+    }
+    .modal h2{font-size:18px;font-weight:700;margin-bottom:16px;color:var(--text)}
+    .modal-input-row{display:flex;gap:8px;margin-bottom:16px}
+    .modal-input-row input{font-size:15px}
+    .modal-add-btn{
+      padding:10px 16px;background:linear-gradient(135deg,var(--accent),#7c3aed);
+      color:#fff;border:none;border-radius:8px;
+      font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;
+      white-space:nowrap;min-height:44px;
+    }
+    .cat-list{list-style:none}
+    .cat-list li{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:10px 12px;border:1px solid var(--border);border-radius:8px;
+      margin-bottom:6px;font-size:14px;color:var(--text);background:var(--surface);
+    }
+    .cat-del-btn{
+      background:none;border:none;cursor:pointer;
+      color:var(--text-muted);font-size:16px;padding:4px 6px;
+      border-radius:4px;transition:color .15s;
+    }
+    .cat-del-btn:hover{color:var(--danger)}
+    .modal-close{
+      margin-top:12px;width:100%;padding:12px;
+      background:rgba(255,255,255,.06);border:1px solid var(--border);
+      border-radius:8px;color:var(--text-muted);font-size:14px;
+      font-family:inherit;cursor:pointer;
+    }
+    [data-theme="light"] .modal-close{background:rgba(0,0,0,.04)}
+    .modal-close:active{opacity:.7}
 
-    /* スマホ向け調整 */
-    @media (max-width: 480px) {
-      body { padding-top: calc(32px + var(--safe-top)); }
-      h1 { font-size: 22px; }
-      .form-row { grid-template-columns: 1fr; }
-      .toolbar-card { flex-direction: column; align-items: stretch; }
-      .filters { justify-content: center; }
+    /* Toast */
+    .toast{
+      position:fixed;bottom:calc(20px + var(--safe-bottom));
+      left:50%;transform:translateX(-50%);
+      background:#1e1e2a;border:1px solid var(--border);
+      border-radius:12px;padding:12px 20px;font-size:14px;color:var(--text);
+      z-index:200;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.4);
+      animation:toastIn .3s ease;
+    }
+    [data-theme="light"] .toast{background:#fff;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+    @keyframes toastIn{
+      from{opacity:0;transform:translateX(-50%) translateY(10px)}
+      to  {opacity:1;transform:translateX(-50%) translateY(0)}
+    }
+    @keyframes fadeIn{
+      from{opacity:0;transform:translateY(6px)}
+      to  {opacity:1;transform:translateY(0)}
+    }
+    .todo-item{animation:fadeIn .2s ease}
+
+    @media(max-width:480px){
+      body{padding-top:calc(32px + var(--safe-top))}
+      h1{font-size:22px}
+      .form-row{grid-template-columns:1fr}
+      .toolbar-row{flex-direction:column;align-items:stretch}
+      .filters{justify-content:center}
+      .sort-select{max-width:100%}
     }
   </style>
 </head>
@@ -319,6 +458,9 @@
   <div class="header">
     <div class="header-icon">✦</div>
     <h1>My Tasks</h1>
+    <div class="header-actions">
+      <button class="icon-header-btn" id="themeBtn" onclick="toggleTheme()" title="テーマ切替">🌙</button>
+    </div>
   </div>
 
   <!-- 入力フォーム -->
@@ -333,30 +475,55 @@
         <option value="high">🔴 優先度: 高</option>
         <option value="low">🟢 優先度: 低</option>
       </select>
-      <select id="categoryInput">
-        <option value="">カテゴリなし</option>
-        <option value="仕事">💼 仕事</option>
-        <option value="プライベート">🏠 プライベート</option>
-        <option value="勉強">📚 勉強</option>
-        <option value="買い物">🛒 買い物</option>
-        <option value="その他">📌 その他</option>
-      </select>
+      <select id="categoryInput"></select>
       <input type="date" id="dueDateInput" class="full" />
+    </div>
+    <div class="form-row" style="margin-bottom:8px">
+      <select id="repeatInput">
+        <option value="">繰り返しなし</option>
+        <option value="daily">🔁 毎日</option>
+        <option value="weekly">🔁 毎週</option>
+        <option value="monthly">🔁 毎月</option>
+      </select>
+      <div></div>
+    </div>
+    <div class="tag-input-wrap" id="tagWrap" onclick="document.getElementById('tagField').focus()">
+      <span style="font-size:12px;color:var(--text-muted);white-space:nowrap;flex-shrink:0">🏷</span>
+      <div id="tagChips" style="display:contents"></div>
+      <input class="tag-input-field" id="tagField" placeholder="タグを追加してEnter" autocomplete="off" />
+    </div>
+    <button class="memo-toggle" id="memoToggleBtn" onclick="toggleMemoArea()">＋ メモを追加</button>
+    <div class="memo-area" id="memoArea">
+      <textarea id="memoInput" placeholder="メモ・詳細を入力..."></textarea>
     </div>
   </div>
 
   <!-- ツールバー -->
   <div class="card toolbar-card">
-    <div class="search-wrap">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-      </svg>
-      <input class="search-box" type="text" id="searchInput" placeholder="検索..." oninput="render()" autocomplete="off" />
+    <div class="toolbar-row">
+      <div class="search-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input class="search-box" type="text" id="searchInput" placeholder="検索..." oninput="render()" autocomplete="off" />
+      </div>
+      <select class="sort-select" id="sortSelect" onchange="render()">
+        <option value="newest">追加日↓新</option>
+        <option value="oldest">追加日↑古</option>
+        <option value="priority">優先度順</option>
+        <option value="due">期限日順</option>
+      </select>
     </div>
-    <div class="filters">
-      <button class="active" onclick="setFilter('all',this)">すべて</button>
-      <button onclick="setFilter('active',this)">未完了</button>
-      <button onclick="setFilter('done',this)">完了</button>
+    <div class="toolbar-row">
+      <div class="filters">
+        <button class="active" onclick="setFilter('all',this)">すべて</button>
+        <button onclick="setFilter('active',this)">未完了</button>
+        <button onclick="setFilter('done',this)">完了</button>
+      </div>
+      <button class="cat-manage-btn" onclick="openCatModal()">⚙ カテゴリ管理</button>
+    </div>
+    <div id="tagFilterWrap" style="display:none">
+      <div class="tag-filters" id="tagFilterChips"></div>
     </div>
   </div>
 
@@ -371,282 +538,596 @@
 
 </div>
 
+<!-- カテゴリ管理モーダル -->
+<div class="modal-overlay hidden" id="catModal">
+  <div class="modal">
+    <h2>⚙ カテゴリ管理</h2>
+    <div class="modal-input-row">
+      <input type="text" id="newCatInput" placeholder="新しいカテゴリ名" />
+      <button class="modal-add-btn" onclick="addCategory()">追加</button>
+    </div>
+    <ul class="cat-list" id="catList"></ul>
+    <button class="modal-close" onclick="closeCatModal()">閉じる</button>
+  </div>
+</div>
+
 <script>
-  let todos = JSON.parse(localStorage.getItem('todos') || '[]');
-  let currentFilter = 'all';
+// ===== State =====
+let todos      = JSON.parse(localStorage.getItem('todos')      || '[]');
+let categories = JSON.parse(localStorage.getItem('categories') || 'null')
+                 || ['仕事','プライベート','勉強','買い物','その他'];
+let currentFilter    = 'all';
+let currentTagFilter = '';
+let pendingTags      = [];
+let editTagState     = {};
+let expandedSubs     = new Set();
+let expandedMemos    = new Set();
+let isDark           = localStorage.getItem('theme') !== 'light';
 
-  // ドラッグ状態
-  let dragSrcId = null;
-  // タッチドラッグ状態
-  let touchSrcId = null;
-  let touchClone = null;
-  let touchStartY = 0;
+// Notification dedup
+const today = new Date().toISOString().slice(0,10);
+if (localStorage.getItem('notifyDate') !== today) {
+  localStorage.setItem('notifyDate', today);
+  localStorage.removeItem('notifiedIds');
+}
+let notifiedIds = new Set(JSON.parse(localStorage.getItem('notifiedIds') || '[]'));
 
-  const PRIORITY_LABEL = { high: '高', medium: '中', low: '低' };
-  const PRIORITY_CLASS = { high: 'p-high', medium: 'p-medium', low: 'p-low' };
+// ===== Persist =====
+function save()           { localStorage.setItem('todos',      JSON.stringify(todos));      }
+function saveCategories() { localStorage.setItem('categories', JSON.stringify(categories)); }
+function saveNotified()   { localStorage.setItem('notifiedIds', JSON.stringify([...notifiedIds])); }
 
-  function save() { localStorage.setItem('todos', JSON.stringify(todos)); }
+// ===== Theme =====
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('themeBtn').textContent = isDark ? '🌙' : '☀️';
+  document.getElementById('themeColorMeta').content = isDark ? '#0f0f13' : '#f0f0f8';
+}
+function toggleTheme() {
+  isDark = !isDark;
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  applyTheme();
+}
+applyTheme();
 
-  function escapeHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
+// ===== Utilities =====
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function isOverdue(d) { return d && new Date(d) < new Date(new Date().toDateString()); }
+function isToday(d)   { return d === today; }
+function fmt(d)       { if (!d) return ''; const [,m,dd] = d.split('-'); return `${m}/${dd}`; }
 
-  function isOverdue(d) {
-    if (!d) return false;
-    return new Date(d) < new Date(new Date().toDateString());
-  }
+const PLABEL = { high:'高', medium:'中', low:'低' };
+const PCLASS  = { high:'p-high', medium:'p-medium', low:'p-low' };
+const PORDER  = { high:0, medium:1, low:2 };
+const RLABEL  = { daily:'毎日', weekly:'毎週', monthly:'毎月' };
 
-  function formatDate(d) {
-    if (!d) return '';
-    const [, m, day] = d.split('-');
-    return `${m}/${day}`;
-  }
+// ===== Category helpers =====
+function buildCatSelect(el, selected) {
+  el.innerHTML = '<option value="">カテゴリなし</option>' +
+    categories.map(c => `<option value="${esc(c)}"${selected===c?' selected':''}>${esc(c)}</option>`).join('');
+}
+function refreshMainCat() {
+  buildCatSelect(document.getElementById('categoryInput'),
+    document.getElementById('categoryInput').value);
+}
 
-  function filtered() {
-    const q = document.getElementById('searchInput').value.trim().toLowerCase();
-    return todos.filter(t => {
-      if (currentFilter === 'active' && t.done) return false;
-      if (currentFilter === 'done' && !t.done) return false;
-      if (q && !t.text.toLowerCase().includes(q) && !(t.category||'').toLowerCase().includes(q)) return false;
-      return true;
-    });
-  }
+// ===== Category modal =====
+function openCatModal()  { document.getElementById('catModal').classList.remove('hidden'); renderCatList(); }
+function closeCatModal() { document.getElementById('catModal').classList.add('hidden'); refreshMainCat(); render(); }
+function renderCatList() {
+  document.getElementById('catList').innerHTML = categories.map((c,i) =>
+    `<li><span>${esc(c)}</span><button class="cat-del-btn" onclick="delCat(${i})">✕</button></li>`
+  ).join('');
+}
+function addCategory() {
+  const inp = document.getElementById('newCatInput');
+  const v = inp.value.trim();
+  if (!v || categories.includes(v)) return;
+  categories.push(v); saveCategories(); inp.value = ''; renderCatList();
+}
+function delCat(i) { categories.splice(i,1); saveCategories(); renderCatList(); }
+document.getElementById('newCatInput').addEventListener('keydown', e => { if (e.key==='Enter') addCategory(); });
 
-  const CHECK_SVG = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg>`;
-  const EDIT_SVG = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
-  const DEL_SVG  = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
-
-  function render() {
-    const list = document.getElementById('todoList');
-    const items = filtered();
-
-    if (items.length === 0) {
-      list.innerHTML = `<li class="empty"><span class="empty-icon">✦</span>タスクがありません</li>`;
-    } else {
-      list.innerHTML = items.map(t => {
-        const overdue = !t.done && isOverdue(t.dueDate);
-        return `
-        <li class="todo-item priority-${t.priority} ${t.done ? 'done' : ''}" data-id="${t.id}"
-            draggable="true"
-            ondragstart="onDragStart(event,${t.id})"
-            ondragover="onDragOver(event)"
-            ondrop="onDrop(event,${t.id})"
-            ondragend="onDragEnd()">
-          <label class="checkbox-wrap">
-            <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggle(${t.id})" />
-            <div class="checkbox-box">${CHECK_SVG}</div>
-          </label>
-          <div class="todo-body">
-            <div class="todo-text">${escapeHtml(t.text)}</div>
-            <div class="todo-meta">
-              <span class="badge ${PRIORITY_CLASS[t.priority]}">${PRIORITY_LABEL[t.priority]}</span>
-              ${t.category ? `<span class="badge cat-badge">${escapeHtml(t.category)}</span>` : ''}
-              ${t.dueDate ? `<span class="badge ${overdue ? 'due-overdue' : 'due-badge'}">${overdue ? '期限切れ · ' : ''}${formatDate(t.dueDate)}</span>` : ''}
-            </div>
-            <div class="edit-form" id="edit-${t.id}">
-              <input type="text" id="edit-text-${t.id}" value="${escapeHtml(t.text)}" />
-              <div class="edit-row">
-                <select id="edit-priority-${t.id}">
-                  <option value="high"   ${t.priority==='high'   ?'selected':''}>🔴 高</option>
-                  <option value="medium" ${t.priority==='medium' ?'selected':''}>🟡 中</option>
-                  <option value="low"    ${t.priority==='low'    ?'selected':''}>🟢 低</option>
-                </select>
-                <select id="edit-category-${t.id}">
-                  <option value=""             ${!t.category               ?'selected':''}>カテゴリなし</option>
-                  <option value="仕事"         ${t.category==='仕事'       ?'selected':''}>💼 仕事</option>
-                  <option value="プライベート" ${t.category==='プライベート'?'selected':''}>🏠 プライベート</option>
-                  <option value="勉強"         ${t.category==='勉強'       ?'selected':''}>📚 勉強</option>
-                  <option value="買い物"       ${t.category==='買い物'     ?'selected':''}>🛒 買い物</option>
-                  <option value="その他"       ${t.category==='その他'     ?'selected':''}>📌 その他</option>
-                </select>
-                <input type="date" id="edit-due-${t.id}" value="${t.dueDate||''}" />
-              </div>
-              <div class="edit-actions">
-                <button class="save-btn" onclick="saveEdit(${t.id})">保存</button>
-                <button class="cancel-btn" onclick="cancelEdit(${t.id})">キャンセル</button>
-              </div>
-            </div>
-          </div>
-          <div class="todo-actions">
-            <button class="icon-btn" onclick="openEdit(${t.id})" title="編集">${EDIT_SVG}</button>
-            <button class="icon-btn del" onclick="remove(${t.id})" title="削除">${DEL_SVG}</button>
-          </div>
-        </li>`;
-      }).join('');
-
-      // タッチドラッグのイベント登録
-      list.querySelectorAll('.todo-item').forEach(el => {
-        el.addEventListener('touchstart', onTouchStart, { passive: true });
-      });
-    }
-
-    const active = todos.filter(t => !t.done).length;
-    document.getElementById('countLabel').textContent = `${active} 件未完了 / ${todos.length} 件`;
-  }
-
-  function addTodo() {
-    const text = document.getElementById('todoInput').value.trim();
-    if (!text) return;
-    todos.unshift({
-      id: Date.now(), text, done: false,
-      priority: document.getElementById('priorityInput').value,
-      category: document.getElementById('categoryInput').value,
-      dueDate: document.getElementById('dueDateInput').value,
-    });
-    document.getElementById('todoInput').value = '';
-    document.getElementById('dueDateInput').value = '';
-    save(); render();
-  }
-
-  function toggle(id) {
-    const t = todos.find(t => t.id === id);
-    if (t) t.done = !t.done;
-    save(); render();
-  }
-
-  function remove(id) {
-    todos = todos.filter(t => t.id !== id);
-    save(); render();
-  }
-
-  function clearDone() {
-    todos = todos.filter(t => !t.done);
-    save(); render();
-  }
-
-  function setFilter(f, btn) {
-    currentFilter = f;
-    document.querySelectorAll('.filters button').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    render();
-  }
-
-  function openEdit(id) {
-    document.querySelectorAll('.edit-form').forEach(f => f.classList.remove('open'));
-    document.getElementById('edit-' + id).classList.add('open');
-  }
-  function cancelEdit(id) {
-    document.getElementById('edit-' + id).classList.remove('open');
-  }
-  function saveEdit(id) {
-    const t = todos.find(t => t.id === id);
-    if (!t) return;
-    const text = document.getElementById('edit-text-' + id).value.trim();
-    if (!text) return;
-    t.text     = text;
-    t.priority = document.getElementById('edit-priority-' + id).value;
-    t.category = document.getElementById('edit-category-' + id).value;
-    t.dueDate  = document.getElementById('edit-due-' + id).value;
-    save(); render();
-  }
-
-  // ---- PC: HTML5 ドラッグ&ドロップ ----
-  function onDragStart(e, id) {
-    dragSrcId = id;
-    e.currentTarget.classList.add('dragging');
-    e.dataTransfer.effectAllowed = 'move';
-  }
-  function onDragOver(e) {
+// ===== Tag input (add form) =====
+function renderTagChips() {
+  document.getElementById('tagChips').innerHTML = pendingTags.map((t,i) =>
+    `<span class="tag-chip">${esc(t)}<button type="button" onclick="rmTag(${i})">✕</button></span>`
+  ).join('');
+}
+function rmTag(i) { pendingTags.splice(i,1); renderTagChips(); }
+document.getElementById('tagField').addEventListener('keydown', e => {
+  if (e.key==='Enter' || e.key===',') {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    document.querySelectorAll('.todo-item').forEach(el => el.classList.remove('drag-over'));
-    e.currentTarget.classList.add('drag-over');
+    const v = e.target.value.trim().replace(/,/g,'');
+    if (v && !pendingTags.includes(v)) { pendingTags.push(v); renderTagChips(); }
+    e.target.value = '';
   }
-  function onDrop(e, targetId) {
-    e.preventDefault();
-    if (dragSrcId === targetId) return;
-    reorder(dragSrcId, targetId);
+  if (e.key==='Backspace' && !e.target.value && pendingTags.length) {
+    pendingTags.pop(); renderTagChips();
   }
-  function onDragEnd() {
-    document.querySelectorAll('.todo-item').forEach(el =>
-      el.classList.remove('dragging', 'drag-over'));
-  }
+});
 
-  // ---- iOS: タッチ ドラッグ&ドロップ ----
-  function onTouchStart(e) {
-    const li = e.currentTarget;
-    touchSrcId = parseInt(li.dataset.id);
-    touchStartY = e.touches[0].clientY;
+// ===== Memo toggle (add form) =====
+function toggleMemoArea() {
+  const a = document.getElementById('memoArea');
+  const b = document.getElementById('memoToggleBtn');
+  a.classList.toggle('open');
+  b.textContent = a.classList.contains('open') ? '－ メモを非表示' : '＋ メモを追加';
+}
 
-    // 長押し後にドラッグ開始
-    const timer = setTimeout(() => {
-      li.classList.add('dragging');
-
-      // ゴーストクローン
-      touchClone = li.cloneNode(true);
-      Object.assign(touchClone.style, {
-        position: 'fixed',
-        zIndex: 9999,
-        width: li.offsetWidth + 'px',
-        opacity: '0.85',
-        pointerEvents: 'none',
-        left: li.getBoundingClientRect().left + 'px',
-        top:  li.getBoundingClientRect().top  + 'px',
-        boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
-        borderRadius: '10px',
-        transform: 'scale(1.03)',
-        transition: 'none',
-      });
-      document.body.appendChild(touchClone);
-
-      document.addEventListener('touchmove', onTouchMove, { passive: false });
-      document.addEventListener('touchend',  onTouchEnd,  { once: true });
-    }, 300);
-
-    li.addEventListener('touchend',   () => clearTimeout(timer), { once: true });
-    li.addEventListener('touchcancel',() => clearTimeout(timer), { once: true });
-  }
-
-  function onTouchMove(e) {
-    if (!touchClone) return;
-    e.preventDefault();
-    const touch = e.touches[0];
-    touchClone.style.top = (touch.clientY - touchClone.offsetHeight / 2) + 'px';
-
-    // 下にある要素を検出
-    touchClone.style.display = 'none';
-    const el = document.elementFromPoint(touch.clientX, touch.clientY);
-    touchClone.style.display = '';
-    const target = el && el.closest('.todo-item');
-
-    document.querySelectorAll('.todo-item').forEach(li => li.classList.remove('drag-over'));
-    if (target && parseInt(target.dataset.id) !== touchSrcId) {
-      target.classList.add('drag-over');
-    }
-  }
-
-  function onTouchEnd(e) {
-    document.removeEventListener('touchmove', onTouchMove);
-    if (touchClone) { touchClone.remove(); touchClone = null; }
-
-    const touch = e.changedTouches[0];
-    const el = document.elementFromPoint(touch.clientX, touch.clientY);
-    const target = el && el.closest('.todo-item');
-    const targetId = target ? parseInt(target.dataset.id) : null;
-
-    document.querySelectorAll('.todo-item').forEach(li =>
-      li.classList.remove('dragging', 'drag-over'));
-
-    if (targetId && targetId !== touchSrcId) {
-      reorder(touchSrcId, targetId);
-    }
-    touchSrcId = null;
-  }
-
-  function reorder(srcId, tgtId) {
-    const si = todos.findIndex(t => t.id === srcId);
-    const ti = todos.findIndex(t => t.id === tgtId);
-    if (si === -1 || ti === -1) return;
-    const [item] = todos.splice(si, 1);
-    todos.splice(ti, 0, item);
-    save(); render();
-  }
-
-  document.getElementById('todoInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') addTodo();
+// ===== Filter / Sort =====
+function filtered() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  let list = todos.filter(t => {
+    if (currentFilter==='active' && t.done)  return false;
+    if (currentFilter==='done'   && !t.done) return false;
+    if (currentTagFilter && !(t.tags||[]).includes(currentTagFilter)) return false;
+    if (q && !t.text.toLowerCase().includes(q)
+          && !(t.category||'').toLowerCase().includes(q)
+          && !(t.memo||'').toLowerCase().includes(q)
+          && !(t.tags||[]).join(' ').toLowerCase().includes(q)) return false;
+    return true;
   });
-
+  const s = document.getElementById('sortSelect').value;
+  if (s==='oldest')   list = [...list].sort((a,b)=>(a.id||0)-(b.id||0));
+  if (s==='priority') list = [...list].sort((a,b)=>PORDER[a.priority]-PORDER[b.priority]);
+  if (s==='due')      list = [...list].sort((a,b)=>{
+    if (!a.dueDate&&!b.dueDate) return 0;
+    if (!a.dueDate) return 1; if (!b.dueDate) return -1;
+    return a.dueDate<b.dueDate?-1:1;
+  });
+  return list;
+}
+function setFilter(f,btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filters button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
   render();
+}
+function setTagFilter(tag) { currentTagFilter = tag; render(); }
+
+// ===== SVG Icons =====
+const CHECK_SVG = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="2,6 5,9 10,3"/></svg>`;
+const EDIT_SVG  = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+const DEL_SVG   = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+const BELL_SVG  = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`;
+
+// ===== Build item HTML =====
+function buildItem(t) {
+  const overdue   = !t.done && isOverdue(t.dueDate);
+  const subs      = t.subtasks || [];
+  const doneSubs  = subs.filter(s=>s.done).length;
+  const subPct    = subs.length ? Math.round(doneSubs/subs.length*100) : 0;
+  const subOpen   = expandedSubs.has(t.id);
+  const memoOpen  = expandedMemos.has(t.id);
+
+  // tags
+  const tagsHtml = (t.tags||[]).map(tag=>
+    `<span class="badge tag-badge">#${esc(tag)}</span>`).join('');
+
+  // subtask section
+  let subHtml = '';
+  if (subs.length > 0) {
+    subHtml = `
+      <div class="subtask-section">
+        <div class="subtask-header" onclick="toggleSubs(${t.id})">
+          <div class="subtask-progress">
+            <div class="subtask-progress-fill" style="width:${subPct}%"></div>
+          </div>
+          <span class="subtask-count">${doneSubs}/${subs.length}</span>
+          <span class="subtask-chevron ${subOpen?'open':''}">▼</span>
+        </div>
+        ${subOpen ? `
+        <div class="subtask-list">
+          ${subs.map(s=>`
+            <div class="subtask-item">
+              <input type="checkbox" class="sub-check" ${s.done?'checked':''}
+                     onchange="toggleSub(${t.id},${s.id})" />
+              <span class="sub-text ${s.done?'done':''}">${esc(s.text)}</span>
+              <button class="sub-del" onclick="delSub(${t.id},${s.id})">✕</button>
+            </div>`).join('')}
+          <div class="add-sub-row">
+            <input class="add-sub-input" type="text" id="si-${t.id}"
+                   placeholder="サブタスクを追加..." autocomplete="off"
+                   onkeydown="if(event.key==='Enter')addSub(${t.id})" />
+            <button class="add-sub-btn" onclick="addSub(${t.id})">＋</button>
+          </div>
+        </div>` : ''}
+      </div>`;
+  } else {
+    subHtml = `
+      <div class="subtask-section">
+        ${subOpen ? `
+        <div class="subtask-list">
+          <div class="add-sub-row">
+            <input class="add-sub-input" type="text" id="si-${t.id}"
+                   placeholder="サブタスクを追加..." autocomplete="off"
+                   onkeydown="if(event.key==='Enter')addSub(${t.id})" />
+            <button class="add-sub-btn" onclick="addSub(${t.id})">＋</button>
+          </div>
+        </div>` :
+        `<button class="add-sub-link" onclick="toggleSubs(${t.id})">＋ サブタスク</button>`}
+      </div>`;
+  }
+
+  // memo preview
+  const memoHtml = t.memo ? `
+    <div class="memo-preview ${memoOpen?'expanded':''}" onclick="toggleMemoExpand(${t.id})">
+      <span class="memo-text">📝 ${esc(t.memo)}</span>
+    </div>` : '';
+
+  return `
+  <li class="todo-item priority-${t.priority} ${t.done?'done':''}" data-id="${t.id}"
+      draggable="true"
+      ondragstart="onDragStart(event,${t.id})"
+      ondragover="onDragOver(event)"
+      ondrop="onDrop(event,${t.id})"
+      ondragend="onDragEnd()">
+    <label class="checkbox-wrap">
+      <input type="checkbox" ${t.done?'checked':''} onchange="toggle(${t.id})" />
+      <div class="checkbox-box">${CHECK_SVG}</div>
+    </label>
+    <div class="todo-body">
+      <div class="todo-text">${esc(t.text)}</div>
+      <div class="todo-meta">
+        <span class="badge ${PCLASS[t.priority]}">${PLABEL[t.priority]}</span>
+        ${t.category?`<span class="badge cat-badge">${esc(t.category)}</span>`:''}
+        ${t.dueDate?`<span class="badge ${overdue?'due-overdue':'due-badge'}">${overdue?'期限切れ · ':''}${fmt(t.dueDate)}</span>`:''}
+        ${t.repeat?`<span class="badge repeat-badge">🔁 ${RLABEL[t.repeat]}</span>`:''}
+        ${tagsHtml}
+      </div>
+      ${memoHtml}
+      ${subHtml}
+      <div class="edit-form" id="ef-${t.id}">
+        <input type="text" id="et-${t.id}" value="${esc(t.text)}" />
+        <div class="edit-row">
+          <select id="ep-${t.id}">
+            <option value="high"   ${t.priority==='high'  ?'selected':''}>🔴 高</option>
+            <option value="medium" ${t.priority==='medium'?'selected':''}>🟡 中</option>
+            <option value="low"    ${t.priority==='low'   ?'selected':''}>🟢 低</option>
+          </select>
+          <select id="ec-${t.id}"></select>
+        </div>
+        <div class="edit-row">
+          <input type="date" id="ed-${t.id}" value="${t.dueDate||''}" />
+          <select id="er-${t.id}">
+            <option value=""        ${!t.repeat          ?'selected':''}>繰り返しなし</option>
+            <option value="daily"   ${t.repeat==='daily'  ?'selected':''}>🔁 毎日</option>
+            <option value="weekly"  ${t.repeat==='weekly' ?'selected':''}>🔁 毎週</option>
+            <option value="monthly" ${t.repeat==='monthly'?'selected':''}>🔁 毎月</option>
+          </select>
+        </div>
+        <div class="tag-input-wrap" id="etw-${t.id}" onclick="document.getElementById('etf-${t.id}').focus()">
+          <span style="font-size:12px;color:var(--text-muted);white-space:nowrap;flex-shrink:0">🏷</span>
+          <div id="etc-${t.id}" style="display:contents"></div>
+          <input class="tag-input-field" id="etf-${t.id}" placeholder="タグを追加してEnter" autocomplete="off" />
+        </div>
+        <textarea id="em-${t.id}" placeholder="メモ...">${esc(t.memo||'')}</textarea>
+        <div class="edit-actions">
+          <button class="save-btn" onclick="saveEdit(${t.id})">保存</button>
+          <button class="cancel-btn" onclick="cancelEdit(${t.id})">キャンセル</button>
+        </div>
+      </div>
+    </div>
+    <div class="todo-actions">
+      <button class="icon-btn ${t.notify?'notify-on':''}" onclick="toggleNotify(${t.id})" title="通知">${BELL_SVG}</button>
+      <button class="icon-btn" onclick="openEdit(${t.id})" title="編集">${EDIT_SVG}</button>
+      <button class="icon-btn del" onclick="remove(${t.id})" title="削除">${DEL_SVG}</button>
+    </div>
+  </li>`;
+}
+
+// ===== Render =====
+function render() {
+  const list  = document.getElementById('todoList');
+  const items = filtered();
+
+  if (!items.length) {
+    list.innerHTML = `<li class="empty"><span class="empty-icon">✦</span>タスクがありません</li>`;
+  } else {
+    list.innerHTML = items.map(t => buildItem(t)).join('');
+    list.querySelectorAll('.todo-item').forEach(el =>
+      el.addEventListener('touchstart', onTouchStart, { passive: true }));
+  }
+
+  const active = todos.filter(t=>!t.done).length;
+  document.getElementById('countLabel').textContent = `${active} 件未完了 / ${todos.length} 件`;
+
+  // Tag filter bar
+  const allTags = [...new Set(todos.flatMap(t=>t.tags||[]))];
+  const wrap = document.getElementById('tagFilterWrap');
+  if (allTags.length) {
+    wrap.style.display = '';
+    document.getElementById('tagFilterChips').innerHTML =
+      allTags.map(tag =>
+        `<button class="tag-filter-btn ${currentTagFilter===tag?'active':''}"
+                 onclick="setTagFilter(${currentTagFilter===tag?`''`:`'${esc(tag)}'`})">#${esc(tag)}</button>`
+      ).join('');
+  } else {
+    wrap.style.display = 'none';
+    currentTagFilter = '';
+  }
+}
+
+// ===== Add =====
+function addTodo() {
+  const text = document.getElementById('todoInput').value.trim();
+  if (!text) return;
+  todos.unshift({
+    id: Date.now(), text, done: false,
+    priority: document.getElementById('priorityInput').value,
+    category: document.getElementById('categoryInput').value,
+    dueDate:  document.getElementById('dueDateInput').value,
+    repeat:   document.getElementById('repeatInput').value,
+    tags:     [...pendingTags],
+    memo:     document.getElementById('memoInput').value.trim(),
+    subtasks: [],
+    notify:   false,
+  });
+  document.getElementById('todoInput').value  = '';
+  document.getElementById('dueDateInput').value = '';
+  document.getElementById('memoInput').value  = '';
+  document.getElementById('repeatInput').value = '';
+  pendingTags = []; renderTagChips();
+  const ma = document.getElementById('memoArea');
+  if (ma.classList.contains('open')) toggleMemoArea();
+  save(); render();
+}
+
+// ===== Toggle done =====
+function toggle(id) {
+  const t = todos.find(t=>t.id===id);
+  if (!t) return;
+  t.done = !t.done;
+  // Recurring: create next occurrence on completion
+  if (t.done && t.repeat) {
+    const base = t.dueDate || today;
+    const next = nextDate(base, t.repeat);
+    todos.unshift({
+      ...t,
+      id: Date.now(), done: false, dueDate: next,
+      subtasks: (t.subtasks||[]).map(s=>({...s, done:false})),
+    });
+  }
+  save(); render();
+}
+function nextDate(d, repeat) {
+  const dt = new Date(d);
+  if (repeat==='daily')   dt.setDate(dt.getDate()+1);
+  if (repeat==='weekly')  dt.setDate(dt.getDate()+7);
+  if (repeat==='monthly') dt.setMonth(dt.getMonth()+1);
+  return dt.toISOString().slice(0,10);
+}
+
+// ===== Remove =====
+function remove(id) { todos = todos.filter(t=>t.id!==id); save(); render(); }
+function clearDone() { todos = todos.filter(t=>!t.done); save(); render(); }
+
+// ===== Edit =====
+function openEdit(id) {
+  document.querySelectorAll('.edit-form').forEach(f=>f.classList.remove('open'));
+  const form = document.getElementById('ef-'+id);
+  if (!form) return;
+  form.classList.add('open');
+  const t = todos.find(t=>t.id===id);
+  if (!t) return;
+  buildCatSelect(document.getElementById('ec-'+id), t.category);
+  // Edit tag state
+  editTagState[id] = [...(t.tags||[])];
+  renderEditChips(id);
+  const field = document.getElementById('etf-'+id);
+  if (field) {
+    field.addEventListener('keydown', e => {
+      if (e.key==='Enter'||e.key===',') {
+        e.preventDefault();
+        const v = e.target.value.trim().replace(/,/g,'');
+        if (v && editTagState[id] && !editTagState[id].includes(v)) {
+          editTagState[id].push(v); renderEditChips(id);
+        }
+        e.target.value = '';
+      }
+      if (e.key==='Backspace' && !e.target.value && editTagState[id]?.length) {
+        editTagState[id].pop(); renderEditChips(id);
+      }
+    });
+  }
+}
+function renderEditChips(id) {
+  const el = document.getElementById('etc-'+id);
+  if (!el) return;
+  el.innerHTML = (editTagState[id]||[]).map((t,i)=>
+    `<span class="tag-chip">${esc(t)}<button type="button" onclick="rmEditTag(${id},${i})">✕</button></span>`
+  ).join('');
+}
+function rmEditTag(id, i) {
+  if (editTagState[id]) { editTagState[id].splice(i,1); renderEditChips(id); }
+}
+function cancelEdit(id) { document.getElementById('ef-'+id).classList.remove('open'); }
+function saveEdit(id) {
+  const t = todos.find(t=>t.id===id);
+  if (!t) return;
+  const text = document.getElementById('et-'+id).value.trim();
+  if (!text) return;
+  t.text     = text;
+  t.priority = document.getElementById('ep-'+id).value;
+  t.category = document.getElementById('ec-'+id).value;
+  t.dueDate  = document.getElementById('ed-'+id).value;
+  t.repeat   = document.getElementById('er-'+id).value;
+  t.tags     = editTagState[id] ? [...editTagState[id]] : [];
+  t.memo     = document.getElementById('em-'+id).value.trim();
+  save(); render();
+}
+
+// ===== Subtasks =====
+function toggleSubs(id) {
+  expandedSubs.has(id) ? expandedSubs.delete(id) : expandedSubs.add(id);
+  render();
+}
+function toggleSub(todoId, subId) {
+  const t = todos.find(t=>t.id===todoId);
+  if (!t) return;
+  const s = (t.subtasks||[]).find(s=>s.id===subId);
+  if (s) s.done = !s.done;
+  expandedSubs.add(todoId);
+  save(); render();
+}
+function delSub(todoId, subId) {
+  const t = todos.find(t=>t.id===todoId);
+  if (!t) return;
+  t.subtasks = (t.subtasks||[]).filter(s=>s.id!==subId);
+  expandedSubs.add(todoId);
+  save(); render();
+}
+function addSub(todoId) {
+  const inp = document.getElementById('si-'+todoId);
+  if (!inp) return;
+  const text = inp.value.trim();
+  if (!text) return;
+  const t = todos.find(t=>t.id===todoId);
+  if (!t) return;
+  if (!t.subtasks) t.subtasks = [];
+  t.subtasks.push({ id: Date.now(), text, done: false });
+  expandedSubs.add(todoId);
+  save(); render();
+}
+
+// ===== Memo expand =====
+function toggleMemoExpand(id) {
+  expandedMemos.has(id) ? expandedMemos.delete(id) : expandedMemos.add(id);
+  render();
+}
+
+// ===== Notifications =====
+function toggleNotify(id) {
+  const t = todos.find(t=>t.id===id);
+  if (!t) return;
+  if (!t.notify) {
+    if (!('Notification' in window)) { showToast('このブラウザは通知に対応していません'); return; }
+    Notification.requestPermission().then(perm => {
+      if (perm === 'granted') {
+        t.notify = true; save(); render(); showToast('通知をオンにしました 🔔');
+      } else {
+        showToast('通知が許可されていません。ブラウザの設定をご確認ください');
+      }
+    });
+  } else {
+    t.notify = false; save(); render(); showToast('通知をオフにしました');
+  }
+}
+function checkNotifications() {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  todos.forEach(t => {
+    if (!t.notify || t.done || !t.dueDate) return;
+    const key = `${t.id}`;
+    if (notifiedIds.has(key)) return;
+    if (isToday(t.dueDate) || isOverdue(t.dueDate)) {
+      const label = isToday(t.dueDate) ? '今日が期限です' : '期限が過ぎています';
+      try {
+        new Notification('My Tasks', { body: `${label}: ${t.text}` });
+        notifiedIds.add(key); saveNotified();
+      } catch(e) {}
+    }
+  });
+}
+checkNotifications();
+setInterval(checkNotifications, 60000);
+
+// ===== Toast =====
+let toastTimer;
+function showToast(msg) {
+  const existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.remove(), 2500);
+}
+
+// ===== Drag & Drop (PC) =====
+let dragSrcId = null;
+function onDragStart(e, id) {
+  dragSrcId = id;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.todo-item').forEach(el=>el.classList.remove('drag-over'));
+  e.currentTarget.classList.add('drag-over');
+}
+function onDrop(e, targetId) {
+  e.preventDefault();
+  if (dragSrcId !== targetId) reorder(dragSrcId, targetId);
+}
+function onDragEnd() {
+  document.querySelectorAll('.todo-item').forEach(el=>el.classList.remove('dragging','drag-over'));
+}
+
+// ===== Touch Drag (iOS) =====
+let touchSrcId = null, touchClone = null;
+function onTouchStart(e) {
+  const li = e.currentTarget;
+  touchSrcId = parseInt(li.dataset.id);
+  const timer = setTimeout(() => {
+    li.classList.add('dragging');
+    touchClone = li.cloneNode(true);
+    Object.assign(touchClone.style, {
+      position:'fixed', zIndex:9999, width:li.offsetWidth+'px', opacity:'.85',
+      pointerEvents:'none',
+      left:li.getBoundingClientRect().left+'px', top:li.getBoundingClientRect().top+'px',
+      boxShadow:'0 8px 24px rgba(0,0,0,.4)', borderRadius:'10px',
+      transform:'scale(1.03)', transition:'none',
+    });
+    document.body.appendChild(touchClone);
+    document.addEventListener('touchmove', onTouchMove, { passive:false });
+    document.addEventListener('touchend',  onTouchEnd,  { once:true });
+  }, 300);
+  li.addEventListener('touchend',    () => clearTimeout(timer), { once:true });
+  li.addEventListener('touchcancel', () => clearTimeout(timer), { once:true });
+}
+function onTouchMove(e) {
+  if (!touchClone) return;
+  e.preventDefault();
+  const touch = e.touches[0];
+  touchClone.style.top = (touch.clientY - touchClone.offsetHeight/2)+'px';
+  touchClone.style.display = 'none';
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  touchClone.style.display = '';
+  const target = el && el.closest('.todo-item');
+  document.querySelectorAll('.todo-item').forEach(li=>li.classList.remove('drag-over'));
+  if (target && parseInt(target.dataset.id) !== touchSrcId) target.classList.add('drag-over');
+}
+function onTouchEnd(e) {
+  document.removeEventListener('touchmove', onTouchMove);
+  if (touchClone) { touchClone.remove(); touchClone = null; }
+  const touch = e.changedTouches[0];
+  const el = document.elementFromPoint(touch.clientX, touch.clientY);
+  const target = el && el.closest('.todo-item');
+  const targetId = target ? parseInt(target.dataset.id) : null;
+  document.querySelectorAll('.todo-item').forEach(li=>li.classList.remove('dragging','drag-over'));
+  if (targetId && targetId !== touchSrcId) reorder(touchSrcId, targetId);
+  touchSrcId = null;
+}
+function reorder(srcId, tgtId) {
+  const si = todos.findIndex(t=>t.id===srcId);
+  const ti = todos.findIndex(t=>t.id===tgtId);
+  if (si===-1||ti===-1) return;
+  const [item] = todos.splice(si,1);
+  todos.splice(ti,0,item);
+  save(); render();
+}
+
+// ===== Init =====
+document.getElementById('todoInput').addEventListener('keydown', e => {
+  if (e.key==='Enter') addTodo();
+});
+refreshMainCat();
+render();
 </script>
 </body>
 </html>
